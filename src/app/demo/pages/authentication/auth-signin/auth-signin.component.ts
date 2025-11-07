@@ -3,11 +3,16 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../services/auth.service';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
 
 @Component({
+  standalone: true,
   selector: 'app-auth-signin',
   templateUrl: './auth-signin.component.html',
-  styleUrls: ['./auth-signin.component.scss']
+  styleUrls: ['./auth-signin.component.scss'],
+  imports: [FormsModule, CommonModule]
 })
 export class AuthSigninComponent {
 
@@ -21,20 +26,18 @@ export class AuthSigninComponent {
     private authService: AuthService,
     private router: Router
   ) {}
+  email = '';
+  password = '';
 
   onLogin(): void {
-    const email = this.emailInput.nativeElement.value.trim();
-    const password = this.passwordInput.nativeElement.value.trim();
     console.log('entra');
-    // Validación básica
-    if (!email || !password) {
-      this.errorMessage = 'Por favor, ingresa correo y contraseña.';
-      console.log('errore de datos ',this.errorMessage);
-      return;
-    }
+    if (!this.email || !this.password) {
+    this.errorMessage = 'Por favor, ingresa correo y contraseña.';
+    return;
+  }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(this.email)) {
       this.errorMessage = 'Por favor, ingresa un correo válido.';
       return;
     }
@@ -42,7 +45,7 @@ export class AuthSigninComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.authService.login(email, password).subscribe({
+    this.authService.login(this.email, this.password).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.authService.setUserData(response.data);
@@ -57,5 +60,9 @@ export class AuthSigninComponent {
         this.isLoading = false;
       }
     });
+  }
+
+  ngOnInit() {
+  this.errorMessage = '';
   }
 }

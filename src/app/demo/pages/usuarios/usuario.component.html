@@ -1,0 +1,135 @@
+<!-- Botón principal -->
+<div class="row mb-3">
+  <div class="col-xl-12 d-flex justify-content-between align-items-center">
+    <h5>Lista de Usuarios</h5>
+    <button class="btn btn-primary" (click)="abrirModalCrear()">
+      <i class="fa fa-plus"></i> Agregar Usuario
+    </button>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre Completo</th>
+              <th>CI</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Teléfono</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let usuario of usuarios; let i = index">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ usuario.nombre }} {{ usuario.apellido_paterno }} {{ usuario.apellido_materno }}</td>
+              <td>{{ usuario.ci }}</td>
+              <td>{{ usuario.email }}</td>
+              <td>{{ usuario.rol_nombre }}</td>
+              <td>{{ usuario.telefono }}</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(usuario)">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarUsuario(usuario.id!)">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="usuarios.length === 0 && !cargando">
+              <td colspan="8" class="text-center">No hay usuarios.</td>
+            </tr>
+            <tr *ngIf="cargando">
+              <td colspan="8" class="text-center">Cargando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal (aparece al final del documento) -->
+<div class="modal fade show" *ngIf="modalVisible" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editando ? 'Editar Usuario' : 'Registrar Usuario' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="usuarioForm">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Nombre *</label>
+              <input formControlName="nombre" class="form-control" [class.is-invalid]="f['nombre'].touched && f['nombre'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].invalid">Nombre requerido</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Apellido Paterno *</label>
+              <input formControlName="apellido_paterno" class="form-control" [class.is-invalid]="f['apellido_paterno'].touched && f['apellido_paterno'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['apellido_paterno'].touched && f['apellido_paterno'].invalid">Apellido paterno requerido</div>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Apellido Materno</label>
+              <input formControlName="apellido_materno" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">CI *</label>
+              <input formControlName="ci" class="form-control" [class.is-invalid]="f['ci'].touched && f['ci'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['ci'].touched && f['ci'].invalid">CI requerido</div>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Email *</label>
+              <input formControlName="email" type="email" class="form-control" [class.is-invalid]="f['email'].touched && f['email'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['email'].touched && f['email'].invalid">Email válido requerido</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Teléfono *</label>
+              <input formControlName="telefono" class="form-control" [class.is-invalid]="f['telefono'].touched && f['telefono'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['telefono'].touched && f['telefono'].invalid">Teléfono requerido</div>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Rol ID *</label>
+              <select formControlName="rol_id" class="form-select">
+                <option [value]="1">Administrador</option>
+                <option [value]="4">Secretaria</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">{{ editando ? 'Nueva contraseña (opcional)' : 'Contraseña *' }}</label>
+              <input formControlName="password" type="password" class="form-control"
+                [class.is-invalid]="f['password'].touched && f['password'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['password'].touched && f['password'].invalid">
+                {{ editando ? 'Mínimo 6 caracteres' : 'Contraseña requerida' }}
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="enviarFormulario()">
+          {{ editando ? 'Actualizar' : 'Registrar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

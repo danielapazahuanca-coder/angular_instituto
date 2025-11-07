@@ -17,7 +17,7 @@ export interface NavigationItem {
 export const NavigationItems: NavigationItem[] = [
   {
     id: 'navigation',
-    title: 'Navigation',
+    title: 'Navegación',
     type: 'group',
     icon: 'icon-navigation',
     children: [
@@ -25,7 +25,7 @@ export const NavigationItems: NavigationItem[] = [
         id: 'dashboard',
         title: 'Dashboard',
         type: 'item',
-        url: '/dashboard',
+        url: '/admin//dashboard',
         icon: 'feather icon-home',
         classes: 'nav-item'
       }
@@ -33,7 +33,7 @@ export const NavigationItems: NavigationItem[] = [
   },
   {
     id: 'ui-element',
-    title: 'UI ELEMENT',
+    title: 'Usuarios',
     type: 'group',
     icon: 'icon-ui',
     children: [
@@ -47,19 +47,19 @@ export const NavigationItems: NavigationItem[] = [
             id: 'button',
             title: 'Button',
             type: 'item',
-            url: '/basic/button'
+            url: '/admin/basic/button'
           },
           {
             id: 'badges',
             title: 'Badges',
             type: 'item',
-            url: '/basic/badges'
+            url: '/admin/basic/badges'
           },
           {
             id: 'breadcrumb-pagination',
             title: 'Breadcrumb & Pagination',
             type: 'item',
-            url: '/basic/breadcrumb-paging'
+            url: '/admin/basic/breadcrumb-paging'
           },
           {
             id: 'collapse',
@@ -71,21 +71,29 @@ export const NavigationItems: NavigationItem[] = [
             id: 'tabs-pills',
             title: 'Tabs & Pills',
             type: 'item',
-            url: '/basic/tabs-pills'
+            url: '/admin/basic/tabs-pills'
           },
           {
             id: 'typography',
             title: 'Typography',
             type: 'item',
-            url: '/basic/typography'
+            url: '/admin/basic/typography'
           }
         ]
+      },
+       {
+        id: 'tables',
+        title: 'Usuario',
+        type: 'item',
+        url: '/admin/usuarios',
+        classes: 'nav-item',
+        icon: 'feather icon-file-text'
       }
     ]
   },
   {
     id: 'forms',
-    title: 'Forms & Tables',
+    title: 'Administración',
     type: 'group',
     icon: 'icon-group',
     children: [
@@ -93,7 +101,7 @@ export const NavigationItems: NavigationItem[] = [
         id: 'forms-element',
         title: 'Form Elements',
         type: 'item',
-        url: '/forms',
+        url: '/admin/forms',
         classes: 'nav-item',
         icon: 'feather icon-file-text'
       },
@@ -101,7 +109,7 @@ export const NavigationItems: NavigationItem[] = [
         id: 'tables',
         title: 'Tables',
         type: 'item',
-        url: '/tables',
+        url: '/admin/tables',
         classes: 'nav-item',
         icon: 'feather icon-server'
       }
@@ -117,7 +125,7 @@ export const NavigationItems: NavigationItem[] = [
         id: 'apexChart',
         title: 'ApexChart',
         type: 'item',
-        url: 'apexchart',
+        url: '/admin/apexchart',
         classes: 'nav-item',
         icon: 'feather icon-pie-chart'
       }
@@ -139,7 +147,7 @@ export const NavigationItems: NavigationItem[] = [
             id: 'signup',
             title: 'Sign up',
             type: 'item',
-            url: '/register',
+            url: '/admin/register',
             target: true,
             breadcrumbs: false
           },
@@ -147,7 +155,7 @@ export const NavigationItems: NavigationItem[] = [
             id: 'signin',
             title: 'Sign in',
             type: 'item',
-            url: '/login',
+            url: '/admin/login',
             target: true,
             breadcrumbs: false
           }
@@ -157,7 +165,7 @@ export const NavigationItems: NavigationItem[] = [
         id: 'sample-page',
         title: 'Sample Page',
         type: 'item',
-        url: '/sample-page',
+        url: '/admin/sample-page',
         classes: 'nav-item',
         icon: 'feather icon-sidebar'
       },

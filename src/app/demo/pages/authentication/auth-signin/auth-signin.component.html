@@ -19,16 +19,16 @@
         </div>
 
         <div class="input-group mb-3">
-          <input
-            #emailInput
-            type="email"
-            class="form-control"
-            placeholder="Email"
-          />
+        <input
+          [(ngModel)]="email"
+          type="email"
+          class="form-control"
+          placeholder="Email"
+        />
         </div>
         <div class="input-group mb-4">
           <input
-            #passwordInput
+            [(ngModel)]="password"
             type="password"
             class="form-control"
             placeholder="Password"
@@ -37,7 +37,7 @@
         <div class="form-group text-start mb-4">
           <div class="checkbox checkbox-fill d-inline">
             <input type="checkbox" name="checkbox-fill-1" id="checkbox-fill-a1" checked="" />
-            <label for="checkbox-fill-a1" class="cr">Save Details</label>
+            <label for="checkbox-fill-a1" class="cr">Guardar Datos</label>
           </div>
         </div>
         <button
@@ -46,16 +46,16 @@
           [disabled]="isLoading"
         >
           <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
-          {{ isLoading ? 'Logging in...' : 'Login' }}
+          {{ isLoading ? 'Ingresando...' : 'Login' }}
         </button>
         <p class="mb-2 text-muted">
-          Forgot password?
+          Olvidaste tu Contraseña?
           <a href="javascript:">Reset</a>
         </p>
-        <p class="mb-0 text-muted">
+       <!-- <p class="mb-0 text-muted">
           Don’t have an account?
           <a href="/register">Sign up</a>
-        </p>
+        </p>-->
       </div>
     </div>
   </div>

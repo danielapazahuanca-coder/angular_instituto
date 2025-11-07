@@ -47,8 +47,8 @@ export class BreadcrumbsComponent {
         const activeLink = router.url;
         const breadcrumbList = this.filterNavigation(this.navigations, activeLink);
         this.navigationList = breadcrumbList;
-        const title = breadcrumbList[breadcrumbList.length - 1]?.title || 'Welcome';
-        this.titleService.setTitle(title + ' | Berry Angular Admin Template');
+        const title = breadcrumbList[breadcrumbList.length - 1]?.title || 'Bienvenido';
+        this.titleService.setTitle('Dashboard');
       }
     });
   }

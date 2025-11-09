@@ -3,23 +3,22 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment'; 
 
-// Modelo completo (lectura)
 export interface Usuario {
   id: number;
   rol_id: number;
-  rol_nombre: string;     // solo viene en GET
+  rol_nombre: string; 
   nombre: string;
   apellido_paterno: string;
   apellido_materno: string;
   ci: string;
   email: string;
   telefono: string;
-  estado: string;         // solo viene en GET
-  created_at: string;     // solo viene en GET
+  estado: string;     
+  created_at: string;
 }
 
-// DTO para CREAR (solo campos que envía el frontend)
 export interface CrearUsuarioDTO {
   rol_id: number;
   nombre: string;
@@ -31,7 +30,6 @@ export interface CrearUsuarioDTO {
   password: string;
 }
 
-// DTO para ACTUALIZAR (password opcional)
 export interface ActualizarUsuarioDTO {
   rol_id: number;
   nombre: string;
@@ -40,10 +38,9 @@ export interface ActualizarUsuarioDTO {
   ci: string;
   email: string;
   telefono: string;
-  password?: string; // opcional
+  password?: string;
 }
 
-// Respuesta genérica
 export interface ApiResponse {
   success: boolean;
   message: string;
@@ -54,7 +51,7 @@ export interface ApiResponse {
   providedIn: 'root'
 })
 export class UsuarioService {
-  private apiUrl = 'http://localhost:8080/instituto_ibct/api/usuarios';
+   private apiUrl = `${environment.apiUrl}/usuarios`;
 
   constructor(private http: HttpClient) {}
 

@@ -1,0 +1,154 @@
+<!-- Botón principal -->
+<div class="row mb-3">
+  <div class="col-xl-12 d-flex justify-content-between align-items-center">
+    <h5>Grupos Académicos</h5>
+    <button class="btn btn-primary" (click)="abrirModalCrear()">
+      <i class="fa fa-plus"></i> Agregar Grupo
+    </button>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Materia</th>
+              <th>Periodo</th>
+              <th>Profesor</th>
+              <th>Cupo</th>
+              <th>Aula / Horario</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let g of grupos; let i = index">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ g.codigo }}</td>
+              <td>{{ g.materia || '—' }}</td>
+              <td>{{ g.periodo || '—' }}</td>
+              <td>{{ g.profesor || 'Sin asignar' }}</td>
+              <td>{{ g.cupo_maximo }}</td>
+              <td>
+                <small>{{ g.aula || '—' }}<br>{{ g.horario || '—' }}</small>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(g)">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarGrupo(g.id)">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="grupos.length === 0 && !cargando">
+              <td colspan="8" class="text-center">No hay grupos.</td>
+            </tr>
+            <tr *ngIf="cargando">
+              <td colspan="8" class="text-center">Cargando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade show" *ngIf="modalVisible" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editando ? 'Editar Grupo' : 'Registrar Grupo' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="grupoForm">
+          <div class="mb-3">
+            <label class="form-label">Código *</label>
+            <input
+              formControlName="codigo"
+              class="form-control"
+              placeholder="Ej: GRP-2025-01"
+              [class.is-invalid]="f['codigo'].touched && f['codigo'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['codigo'].touched && f['codigo'].invalid">
+              Código requerido
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Materia *</label>
+              <select formControlName="materia_id" class="form-select" [class.is-invalid]="f['materia_id'].touched && f['materia_id'].invalid">
+                <option [value]="null">Seleccionar...</option>
+                <option *ngFor="let m of materias" [value]="m.id">{{ m.nombre }}</option>
+              </select>
+              <div class="invalid-feedback" *ngIf="f['materia_id'].touched && f['materia_id'].invalid">
+                Seleccione una materia
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Periodo Académico *</label>
+              <select formControlName="periodo_academico_id" class="form-select" [class.is-invalid]="f['periodo_academico_id'].touched && f['periodo_academico_id'].invalid">
+                <option [value]="null">Seleccionar...</option>
+                <option *ngFor="let p of periodos" [value]="p.id">{{ p.nombre }}</option>
+              </select>
+              <div class="invalid-feedback" *ngIf="f['periodo_academico_id'].touched && f['periodo_academico_id'].invalid">
+                Seleccione un periodo
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Profesor (opcional)</label>
+            <select formControlName="profesor_id" class="form-select">
+              <option [value]="null">Sin asignar</option>
+              <option *ngFor="let u of profesores" [value]="u.id">
+                {{ u.nombre }} {{ u.apellido_paterno }}
+              </option>
+            </select>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Cupo Máximo *</label>
+              <input
+                formControlName="cupo_maximo"
+                type="number"
+                min="1"
+                class="form-control"
+                [class.is-invalid]="f['cupo_maximo'].touched && f['cupo_maximo'].invalid"
+              />
+              <div class="invalid-feedback" *ngIf="f['cupo_maximo'].touched && f['cupo_maximo'].invalid">
+                Mínimo 1 estudiante
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Aula</label>
+              <input formControlName="aula" class="form-control" placeholder="Ej: Aula 301" />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Horario</label>
+            <input formControlName="horario" class="form-control" placeholder="Ej: Lun-Mié 18:00-20:00" />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="enviarFormulario()">
+          {{ editando ? 'Actualizar' : 'Registrar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

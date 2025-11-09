@@ -1,0 +1,146 @@
+<!-- Botón principal -->
+<div class="row mb-3">
+  <div class="col-xl-12 d-flex justify-content-between align-items-center">
+    <h5>Lista de Materias</h5>
+    <button class="btn btn-primary" (click)="abrirModalCrear()">
+      <i class="fa fa-plus"></i> Agregar Materia
+    </button>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Créditos</th>
+              <th>Teoría / Práctica</th>
+              <th>Tipo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let materia of materias; let i = index">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ materia.codigo }}</td>
+              <td>{{ materia.nombre }}</td>
+              <td>{{ materia.creditos }}</td>
+              <td>{{ materia.horas_teoricas }}h / {{ materia.horas_practicas }}h</td>
+              <td>
+                <span class="badge bg-{{ materia.tipo === 'obligatoria' ? 'primary' : materia.tipo === 'optativa' ? 'success' : 'info' }}">
+                  {{ materia.tipo | titlecase }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(materia)">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarMateria(materia.id)">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="materias.length === 0 && !cargando">
+              <td colspan="7" class="text-center">No hay materias.</td>
+            </tr>
+            <tr *ngIf="cargando">
+              <td colspan="7" class="text-center">Cargando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade show" *ngIf="modalVisible" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editando ? 'Editar Materia' : 'Registrar Materia' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="materiaForm">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Código *</label>
+              <input
+                formControlName="codigo"
+                class="form-control"
+                [class.is-invalid]="f['codigo'].touched && f['codigo'].invalid"
+              />
+              <div class="invalid-feedback" *ngIf="f['codigo'].touched && f['codigo'].invalid">
+                Código requerido
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nombre *</label>
+              <input
+                formControlName="nombre"
+                class="form-control"
+                [class.is-invalid]="f['nombre'].touched && f['nombre'].invalid"
+              />
+              <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].invalid">
+                Nombre requerido
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea formControlName="descripcion" class="form-control" rows="2"></textarea>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Créditos *</label>
+              <input
+                formControlName="creditos"
+                type="number"
+                min="1"
+                class="form-control"
+                [class.is-invalid]="f['creditos'].touched && f['creditos'].invalid"
+              />
+              <div class="invalid-feedback" *ngIf="f['creditos'].touched && f['creditos'].invalid">
+                Mínimo 1 crédito
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Horas Teóricas</label>
+              <input formControlName="horas_teoricas" type="number" min="0" class="form-control" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Horas Prácticas</label>
+              <input formControlName="horas_practicas" type="number" min="0" class="form-control" />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Tipo *</label>
+            <select formControlName="tipo" class="form-select">
+              <option *ngFor="let tipo of tiposDisponibles" [value]="tipo.value">
+                {{ tipo.label }}
+              </option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="enviarFormulario()">
+          {{ editando ? 'Actualizar' : 'Registrar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

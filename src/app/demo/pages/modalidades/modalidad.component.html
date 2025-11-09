@@ -1,0 +1,107 @@
+<!-- Botón principal -->
+<div class="row mb-3">
+  <div class="col-xl-12 d-flex justify-content-between align-items-center">
+    <h5>Lista de Modalidades</h5>
+    <button class="btn btn-primary" (click)="abrirModalCrear()">
+      <i class="fa fa-plus"></i> Agregar Modalidad
+    </button>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Duración (meses)</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let modalidad of modalidades; let i = index">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ modalidad.nombre }}</td>
+              <td>{{ modalidad.descripcion || '—' }}</td>
+              <td>{{ modalidad.duracion_meses || '—' }}</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(modalidad)">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarModalidad(modalidad.id)">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="modalidades.length === 0 && !cargando">
+              <td colspan="5" class="text-center">No hay modalidades.</td>
+            </tr>
+            <tr *ngIf="cargando">
+              <td colspan="5" class="text-center">Cargando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade show" *ngIf="modalVisible" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editando ? 'Editar Modalidad' : 'Registrar Modalidad' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="modalidadForm">
+          <div class="mb-3">
+            <label class="form-label">Nombre *</label>
+            <input
+              formControlName="nombre"
+              class="form-control"
+              [class.is-invalid]="f['nombre'].touched && f['nombre'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].invalid">
+              El nombre es obligatorio
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea
+              formControlName="descripcion"
+              class="form-control"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Duración en meses</label>
+            <input
+              formControlName="duracion_meses"
+              type="number"
+              class="form-control"
+              min="1"
+            />
+            <small class="form-text text-muted">Dejar en blanco si no aplica</small>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="enviarFormulario()">
+          {{ editando ? 'Actualizar' : 'Registrar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

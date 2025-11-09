@@ -1,0 +1,148 @@
+<!-- Botón principal -->
+<div class="row mb-3">
+  <div class="col-xl-12 d-flex justify-content-between align-items-center">
+    <h5>Periodos Académicos</h5>
+    <button class="btn btn-primary" (click)="abrirModalCrear()">
+      <i class="fa fa-plus"></i> Agregar Periodo
+    </button>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Año</th>
+              <th>Tipo</th>
+              <th>Inicio / Fin</th>
+              <th>Inscripciones</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of periodos; let i = index">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ p.nombre }}</td>
+              <td>{{ p.anio }}</td>
+              <td>{{ p.tipo | titlecase }}</td>
+              <td>{{ formatearFecha(p.fecha_inicio) }}<br>{{ formatearFecha(p.fecha_fin) }}</td>
+              <td *ngIf="p.fecha_inicio_inscripciones || p.fecha_fin_inscripciones">
+                {{ formatearFecha(p.fecha_inicio_inscripciones) }}<br>
+                {{ formatearFecha(p.fecha_fin_inscripciones) }}
+              </td>
+              <td *ngIf="!p.fecha_inicio_inscripciones && !p.fecha_fin_inscripciones">
+                —
+              </td>
+              <td>
+                <span class="badge bg-{{ p.estado === 'activo' ? 'success' : 'secondary' }}">
+                  {{ p.estado }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(p)">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarPeriodo(p.id)">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="periodos.length === 0 && !cargando">
+              <td colspan="8" class="text-center">No hay periodos académicos.</td>
+            </tr>
+            <tr *ngIf="cargando">
+              <td colspan="8" class="text-center">Cargando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade show" *ngIf="modalVisible" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editando ? 'Editar Periodo' : 'Registrar Periodo Académico' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="periodoForm">
+          <div class="mb-3">
+            <label class="form-label">Nombre *</label>
+            <input
+              formControlName="nombre"
+              class="form-control"
+              placeholder="Ej: Semestre 2025-1"
+              [class.is-invalid]="f['nombre'].touched && f['nombre'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].invalid">
+              Nombre requerido
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Año *</label>
+              <input
+                formControlName="anio"
+                type="number"
+                min="2000"
+                class="form-control"
+                [class.is-invalid]="f['anio'].touched && f['anio'].invalid"
+              />
+              <div class="invalid-feedback" *ngIf="f['anio'].touched && f['anio'].invalid">
+                Año inválido
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo *</label>
+              <select formControlName="tipo" class="form-select">
+                <option *ngFor="let t of tiposDisponibles" [value]="t.value">{{ t.label }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Fecha de Inicio *</label>
+              <input formControlName="fecha_inicio" type="date" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fecha de Fin *</label>
+              <input formControlName="fecha_fin" type="date" class="form-control" />
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Inicio Inscripciones</label>
+              <input formControlName="fecha_inicio_inscripciones" type="date" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fin Inscripciones</label>
+              <input formControlName="fecha_fin_inscripciones" type="date" class="form-control" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="enviarFormulario()">
+          {{ editando ? 'Actualizar' : 'Registrar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,163 @@
+<!-- Botón principal -->
+<div class="row mb-3">
+  <div class="col-xl-12 d-flex justify-content-between align-items-center">
+    <h5>Lista de Carreras</h5>
+    <button class="btn btn-primary" (click)="abrirModalCrear()">
+      <i class="fa fa-plus"></i> Agregar Carrera
+    </button>
+  </div>
+</div>
+
+<!-- Tabla -->
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Modalidad</th>
+              <th>Semestres</th>
+              <th>Créditos</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let carrera of carreras; let i = index">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ carrera.codigo }}</td>
+              <td>{{ carrera.nombre }}</td>
+              <td>{{ getModalidadNombre(carrera.modalidad_id) }}</td>
+              <td>{{ carrera.duracion_semestres }}</td>
+              <td>{{ carrera.creditos_totales || '—' }}</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(carrera)">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarCarrera(carrera.id)">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="carreras.length === 0 && !cargando">
+              <td colspan="7" class="text-center">No hay carreras.</td>
+            </tr>
+            <tr *ngIf="cargando">
+              <td colspan="7" class="text-center">Cargando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade show" *ngIf="modalVisible" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editando ? 'Editar Carrera' : 'Registrar Carrera' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="carreraForm">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Modalidad *</label>
+              <select formControlName="modalidad_id" class="form-select">
+                <option *ngFor="let m of modalidades" [value]="m.id">{{ m.nombre }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Código *</label>
+              <input
+                formControlName="codigo"
+                class="form-control"
+                [class.is-invalid]="f['codigo'].touched && f['codigo'].invalid"
+              />
+              <div class="invalid-feedback" *ngIf="f['codigo'].touched && f['codigo'].invalid">
+                Código requerido
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nombre *</label>
+            <input
+              formControlName="nombre"
+              class="form-control"
+              [class.is-invalid]="f['nombre'].touched && f['nombre'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].invalid">
+              Nombre requerido
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Duración (semestres) *</label>
+            <input
+              formControlName="duracion_semestres"
+              type="number"
+              min="1"
+              class="form-control"
+              [class.is-invalid]="f['duracion_semestres'].touched && f['duracion_semestres'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['duracion_semestres'].touched && f['duracion_semestres'].invalid">
+              Debe ser al menos 1
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Créditos totales</label>
+              <input formControlName="creditos_totales" type="number" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Costo inscripción (opcional)</label>
+              <input formControlName="costo_inscripcion" type="number" step="0.01" class="form-control" />
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Costo mensual (opcional)</label>
+              <input formControlName="costo_mensual" type="number" step="0.01" class="form-control" />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea formControlName="descripcion" class="form-control" rows="2"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Requisitos de ingreso</label>
+            <textarea formControlName="requisitos" class="form-control" rows="2"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Perfil de egreso</label>
+            <textarea formControlName="perfil_egreso" class="form-control" rows="2"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Campo laboral</label>
+            <textarea formControlName="campo_laboral" class="form-control" rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="enviarFormulario()">
+          {{ editando ? 'Actualizar' : 'Registrar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

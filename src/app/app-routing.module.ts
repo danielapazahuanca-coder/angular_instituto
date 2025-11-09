@@ -52,6 +52,26 @@ const routes: Routes = [
         path: 'usuarios',
         loadComponent: () => import('./demo/pages/usuarios/usuario.component').then((c) => c.UsuarioComponent)
       },
+     {
+        path: 'modalidades',
+        loadComponent: () => import('./demo/pages/modalidades/modalidad.component').then((c) => c.ModalidadComponent)
+      },
+      {
+        path: 'carreras',
+        loadComponent: () => import('./demo/pages/carreras/carrera.component').then((c) => c.CarreraComponent)
+      },
+      {
+        path: 'materias',
+        loadComponent: () => import('./demo/pages/materias/materia.component').then((c) => c.MateriaComponent)
+      },
+      {
+        path: 'periodosAcademicos',
+        loadComponent: () => import('./demo/pages/periodosAcademicos/periodo-academico.component').then((c) => c.PeriodoAcademicoComponent)
+      },
+      {
+        path: 'grupos',
+        loadComponent: () => import('./demo/pages/grupos/grupo.component').then((c) => c.GrupoComponent)
+      },
       {
         path: 'apexchart',
         loadComponent: () => import('./demo/pages/core-chart/apex-chart/apex-chart.component').then((c) => c.ApexChartComponent)

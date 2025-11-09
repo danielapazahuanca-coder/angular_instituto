@@ -93,10 +93,54 @@ export const NavigationItems: NavigationItem[] = [
   },
   {
     id: 'forms',
-    title: 'Administración',
+    title: 'Modulo Administración',
     type: 'group',
     icon: 'icon-group',
     children: [
+      {
+        id: 'basic',
+        title: 'Administración Instituto',
+        type: 'collapse',
+        icon: 'feather icon-box',
+        children: [
+          {
+            id: 'button',
+            title: 'Carreras',
+            type: 'item',
+            url: '/admin/carreras'
+          },
+                    {
+            id: 'button',
+            title: 'Cursos',
+            type: 'item',
+            url: '/admin/grupos'
+          },
+                    {
+            id: 'button',
+            title: 'Materias',
+            type: 'item',
+            url: '/admin/materias'
+          },
+          {
+            id: 'badges',
+            title: 'Modalidad',
+            type: 'item',
+            url: '/admin/modalidades'
+          },
+          {
+            id: 'tabs-pills',
+            title: 'Malla Curricular',
+            type: 'item',
+            url: '/admin/basic/tabs-pills'
+          },
+          {
+            id: 'typography',
+            title: 'Periodo Academico',
+            type: 'item',
+            url: '/admin/periodosAcademicos'
+          }
+        ]
+      },
       {
         id: 'forms-element',
         title: 'Form Elements',

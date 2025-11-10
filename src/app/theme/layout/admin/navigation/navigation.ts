@@ -141,6 +141,22 @@ export const NavigationItems: NavigationItem[] = [
           }
         ]
       },
+            {
+        id: 'forms-element',
+        title: 'Estudiantes',
+        type: 'item',
+        url: '/admin/estudiantes',
+        classes: 'nav-item',
+        icon: 'feather icon-file-text'
+      },
+      {
+        id: 'tables',
+        title: 'Profesores',
+        type: 'item',
+        url: '/admin/tables',
+        classes: 'nav-item',
+        icon: 'feather icon-server'
+      },
       {
         id: 'forms-element',
         title: 'Form Elements',
@@ -161,13 +177,29 @@ export const NavigationItems: NavigationItem[] = [
   },
   {
     id: 'chart-maps',
-    title: 'Chart',
+    title: 'Cajas',
     type: 'group',
     icon: 'icon-charts',
     children: [
       {
         id: 'apexChart',
         title: 'ApexChart',
+        type: 'item',
+        url: '/admin/apexchart',
+        classes: 'nav-item',
+        icon: 'feather icon-pie-chart'
+      },
+      {
+        id: 'apexChart',
+        title: 'Ingresos',
+        type: 'item',
+        url: '/admin/apexchart',
+        classes: 'nav-item',
+        icon: 'feather icon-pie-chart'
+      },
+       {
+        id: 'apexChart',
+        title: 'Egresos',
         type: 'item',
         url: '/admin/apexchart',
         classes: 'nav-item',

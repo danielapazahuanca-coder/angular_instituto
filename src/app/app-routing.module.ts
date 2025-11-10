@@ -72,6 +72,10 @@ const routes: Routes = [
         path: 'grupos',
         loadComponent: () => import('./demo/pages/grupos/grupo.component').then((c) => c.GrupoComponent)
       },
+            {
+        path: 'estudiantes',
+        loadComponent: () => import('./demo/pages/estudiantes/estudiante.component').then((c) => c.EstudianteComponent)
+      },
       {
         path: 'apexchart',
         loadComponent: () => import('./demo/pages/core-chart/apex-chart/apex-chart.component').then((c) => c.ApexChartComponent)

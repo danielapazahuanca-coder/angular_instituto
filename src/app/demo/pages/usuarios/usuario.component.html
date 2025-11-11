@@ -20,7 +20,6 @@
               <th>Nombre Completo</th>
               <th>CI</th>
               <th>Email</th>
-              <th>Rol</th>
               <th>Teléfono</th>
               <th>Acciones</th>
             </tr>
@@ -31,7 +30,6 @@
               <td>{{ usuario.nombre }} {{ usuario.apellido_paterno }} {{ usuario.apellido_materno }}</td>
               <td>{{ usuario.ci }}</td>
               <td>{{ usuario.email }}</td>
-              <td>{{ usuario.rol_nombre }}</td>
               <td>{{ usuario.telefono }}</td>
               <td>
                 <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(usuario)">

@@ -18,19 +18,23 @@
             <tr>
               <th>#</th>
               <th>Nombre Completo</th>
-              <th>CI</th>
               <th>Email</th>
-              <th>Teléfono</th>
+              <th>Rol</th>
+              <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let usuario of usuarios; let i = index">
               <th scope="row">{{ i + 1 }}</th>
-              <td>{{ usuario.nombre }} {{ usuario.apellido_paterno }} {{ usuario.apellido_materno }}</td>
-              <td>{{ usuario.ci }}</td>
+              <td>{{ usuario.nombre }} {{ usuario.apellido }}</td>
               <td>{{ usuario.email }}</td>
-              <td>{{ usuario.telefono }}</td>
+              <td>{{ usuario.rol === 'admin' ? 'Administrador' : 'Secretaria' }}</td>
+              <td>
+                <span [class.text-success]="usuario.activo" [class.text-danger]="!usuario.activo">
+                  {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
               <td>
                 <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(usuario)">
                   <i class="fa fa-edit"></i>
@@ -41,10 +45,10 @@
               </td>
             </tr>
             <tr *ngIf="usuarios.length === 0 && !cargando">
-              <td colspan="8" class="text-center">No hay usuarios.</td>
+              <td colspan="6" class="text-center">No hay usuarios.</td>
             </tr>
             <tr *ngIf="cargando">
-              <td colspan="8" class="text-center">Cargando...</td>
+              <td colspan="6" class="text-center">Cargando...</td>
             </tr>
           </tbody>
         </table>
@@ -53,7 +57,7 @@
   </div>
 </div>
 
-<!-- Modal (aparece al final del documento) -->
+<!-- Modal -->
 <div class="modal fade show" *ngIf="modalVisible" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -72,21 +76,9 @@
               <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].invalid">Nombre requerido</div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Apellido Paterno *</label>
-              <input formControlName="apellido_paterno" class="form-control" [class.is-invalid]="f['apellido_paterno'].touched && f['apellido_paterno'].invalid" />
-              <div class="invalid-feedback" *ngIf="f['apellido_paterno'].touched && f['apellido_paterno'].invalid">Apellido paterno requerido</div>
-            </div>
-          </div>
-
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Apellido Materno</label>
-              <input formControlName="apellido_materno" class="form-control" />
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">CI *</label>
-              <input formControlName="ci" class="form-control" [class.is-invalid]="f['ci'].touched && f['ci'].invalid" />
-              <div class="invalid-feedback" *ngIf="f['ci'].touched && f['ci'].invalid">CI requerido</div>
+              <label class="form-label">Apellido *</label>
+              <input formControlName="apellido" class="form-control" [class.is-invalid]="f['apellido'].touched && f['apellido'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['apellido'].touched && f['apellido'].invalid">Apellido requerido</div>
             </div>
           </div>
 
@@ -97,26 +89,38 @@
               <div class="invalid-feedback" *ngIf="f['email'].touched && f['email'].invalid">Email válido requerido</div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Teléfono *</label>
-              <input formControlName="telefono" class="form-control" [class.is-invalid]="f['telefono'].touched && f['telefono'].invalid" />
-              <div class="invalid-feedback" *ngIf="f['telefono'].touched && f['telefono'].invalid">Teléfono requerido</div>
+              <label class="form-label">Rol *</label>
+              <select formControlName="rol" class="form-select" [class.is-invalid]="f['rol'].touched && f['rol'].invalid">
+                <option value="admin">Administrador</option>
+                <option value="secretaria">Secretaria</option>
+              </select>
+              <div class="invalid-feedback" *ngIf="f['rol'].touched && f['rol'].invalid">Rol requerido</div>
+            </div>
+          </div>
+
+          <div class="row mb-3" *ngIf="!editando">
+            <div class="col-md-12">
+              <label class="form-label">Contraseña *</label>
+              <input formControlName="password" type="password" class="form-control"
+                [class.is-invalid]="f['password'].touched && f['password'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['password'].touched && f['password'].invalid">
+                Contraseña requerida
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-3" *ngIf="editando">
+            <div class="col-md-12">
+              <label class="form-label">Nueva contraseña (opcional)</label>
+              <input formControlName="password" type="password" class="form-control" />
             </div>
           </div>
 
           <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label">Rol ID *</label>
-              <select formControlName="rol_id" class="form-select">
-                <option [value]="1">Administrador</option>
-                <option [value]="4">Secretaria</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">{{ editando ? 'Nueva contraseña (opcional)' : 'Contraseña *' }}</label>
-              <input formControlName="password" type="password" class="form-control"
-                [class.is-invalid]="f['password'].touched && f['password'].invalid" />
-              <div class="invalid-feedback" *ngIf="f['password'].touched && f['password'].invalid">
-                {{ editando ? 'Mínimo 6 caracteres' : 'Contraseña requerida' }}
+            <div class="col-md-12">
+              <div class="form-check">
+                <input formControlName="activo" type="checkbox" class="form-check-input" id="activoCheck" />
+                <label class="form-check-label" for="activoCheck">Usuario activo</label>
               </div>
             </div>
           </div>

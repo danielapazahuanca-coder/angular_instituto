@@ -105,50 +105,32 @@ export const NavigationItems: NavigationItem[] = [
         children: [
           {
             id: 'button',
-            title: 'Carreras',
+            title: 'Cursos',
             type: 'item',
-            url: '/admin/carreras'
-          },
+            url: '/admin/cursos'
+          }/*,
                     {
             id: 'button',
             title: 'Cursos',
             type: 'item',
-            url: '/admin/grupos'
+            url: '/admin/cursos'
           },
                     {
             id: 'button',
             title: 'Materias',
             type: 'item',
             url: '/admin/materias'
-          },
-          {
-            id: 'badges',
-            title: 'Modalidad',
-            type: 'item',
-            url: '/admin/modalidades'
-          },
-          {
-            id: 'tabs-pills',
-            title: 'Malla Curricular',
-            type: 'item',
-            url: '/admin/basic/tabs-pills'
-          },
-          {
-            id: 'typography',
-            title: 'Periodo Academico',
-            type: 'item',
-            url: '/admin/periodosAcademicos'
-          }
+          },*/
         ]
       },
             {
         id: 'forms-element',
         title: 'Estudiantes',
         type: 'item',
-        url: '/admin/estudiantes',
+        url: '/admin/registro-completo',
         classes: 'nav-item',
         icon: 'feather icon-file-text'
-      },
+      }/*,
       {
         id: 'tables',
         title: 'Profesores',
@@ -172,7 +154,7 @@ export const NavigationItems: NavigationItem[] = [
         url: '/admin/tables',
         classes: 'nav-item',
         icon: 'feather icon-server'
-      }
+      }*/
     ]
   },
   {
@@ -191,12 +173,20 @@ export const NavigationItems: NavigationItem[] = [
       },
       {
         id: 'apexChart',
-        title: 'Ingresos',
+        title: 'Ingresos - Egresos',
         type: 'item',
-        url: '/admin/apexchart',
+        url: '/admin/movimientos',
         classes: 'nav-item',
         icon: 'feather icon-pie-chart'
       },
+            {
+        id: 'apexChart',
+        title: 'Pagos',
+        type: 'item',
+        url: '/admin/pago-estudiantes',
+        classes: 'nav-item',
+        icon: 'feather icon-pie-chart'
+      }/*,
        {
         id: 'apexChart',
         title: 'Egresos',
@@ -204,7 +194,7 @@ export const NavigationItems: NavigationItem[] = [
         url: '/admin/apexchart',
         classes: 'nav-item',
         icon: 'feather icon-pie-chart'
-      }
+      }*/
     ]
   },
   {

@@ -1,36 +1,44 @@
-import { Component,OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { SharedModule } from 'src/app/theme/shared/shared.module';
-import { UsuarioService, Usuario,CrearUsuarioDTO,ActualizarUsuarioDTO } from '../../../services/usuario.service';
-import { FormBuilder,ReactiveFormsModule, FormGroup, Validators } from '@angular/forms';
+import {
+  UsuarioService,
+  Usuario,
+  CrearUsuarioDTO,
+  ActualizarUsuarioDTO
+} from '../../../services/usuario.service';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  FormGroup,
+  Validators
+} from '@angular/forms';
 
 @Component({
   selector: 'app-tbl-bootstrap',
-  imports: [SharedModule,ReactiveFormsModule],
+  imports: [SharedModule, ReactiveFormsModule],
   templateUrl: './usuario.component.html',
   styleUrls: ['./usuario.component.scss']
 })
 export class UsuarioComponent implements OnInit {
-    usuarios: Usuario[] = [];
-    cargando = false;
-    modalVisible = false;
-    editando = false;
-    usuarioActual: Usuario | null = null;
+  usuarios: Usuario[] = [];
+  cargando = false;
+  modalVisible = false;
+  editando = false;
+  usuarioActual: Usuario | null = null;
 
-      usuarioForm: FormGroup = this.fb.group({
+  usuarioForm: FormGroup = this.fb.group({
     id: [null],
-    rol_id: [1, [Validators.required]],
     nombre: ['', [Validators.required]],
-    apellido_paterno: ['', [Validators.required]],
-    apellido_materno: [''],
-    ci: ['', [Validators.required]],
+    apellido: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
-    telefono: ['', [Validators.required]],
-    password: ['', this.editando ? [] : [Validators.required]] 
+    rol: ['secretaria', [Validators.required]],
+    activo: [true],
+    password: ['', []] 
   });
 
-    constructor(
+  constructor(
     private fb: FormBuilder,
-    private usuarioService: UsuarioService,
+    private usuarioService: UsuarioService
   ) {}
 
   ngOnInit(): void {
@@ -46,7 +54,7 @@ export class UsuarioComponent implements OnInit {
       },
       error: () => {
         this.cargando = false;
-      //  this.toastr.error('Error al cargar usuarios');
+        // this.toastr.error('Error al cargar usuarios');
       }
     });
   }
@@ -56,15 +64,14 @@ export class UsuarioComponent implements OnInit {
     this.usuarioActual = null;
     this.usuarioForm.reset({
       id: null,
-      rol_id: 1,
       nombre: '',
-      apellido_paterno: '',
-      apellido_materno: '',
-      ci: '',
+      apellido: '',
       email: '',
-      telefono: '',
+      rol: 'secretaria',
+      activo: true,
       password: ''
     });
+    
     this.usuarioForm.get('password')?.setValidators([Validators.required]);
     this.usuarioForm.get('password')?.updateValueAndValidity();
     this.modalVisible = true;
@@ -75,13 +82,11 @@ export class UsuarioComponent implements OnInit {
     this.usuarioActual = usuario;
     this.usuarioForm.patchValue({
       id: usuario.id,
-      rol_id: usuario.rol_id,
       nombre: usuario.nombre,
-      apellido_paterno: usuario.apellido_paterno,
-      apellido_materno: usuario.apellido_materno,
-      ci: usuario.ci,
+      apellido: usuario.apellido,
       email: usuario.email,
-      telefono: usuario.telefono,
+      rol: usuario.rol,
+      activo: usuario.activo,
       password: '' 
     });
    
@@ -100,44 +105,42 @@ export class UsuarioComponent implements OnInit {
 
     if (this.editando && this.usuarioActual) {
       const datos: ActualizarUsuarioDTO = {
-        rol_id: formValue.rol_id,
         nombre: formValue.nombre,
-        apellido_paterno: formValue.apellido_paterno,
-        apellido_materno: formValue.apellido_materno,
-        ci: formValue.ci,
+        apellido: formValue.apellido,
         email: formValue.email,
-        telefono: formValue.telefono,
+        rol: formValue.rol,
+        activo: formValue.activo,
         password: formValue.password || undefined 
       };
+
       this.usuarioService.actualizarUsuario(this.usuarioActual.id, datos).subscribe({
         next: () => {
-          //this.toastr.success('Usuario actualizado');
+         
           this.cerrarModal();
           this.cargarUsuarios();
         },
         error: () => {
-          //this.toastr.error('Error al actualizar');
+          
         }
       });
     } else {
       const datos: CrearUsuarioDTO = {
-        rol_id: formValue.rol_id,
         nombre: formValue.nombre,
-        apellido_paterno: formValue.apellido_paterno,
-        apellido_materno: formValue.apellido_materno,
-        ci: formValue.ci,
+        apellido: formValue.apellido,
         email: formValue.email,
-        telefono: formValue.telefono,
-        password: formValue.password
+        rol: formValue.rol,
+        password: formValue.password,
+        activo: formValue.activo
       };
+
       this.usuarioService.crearUsuario(datos).subscribe({
         next: () => {
-         // this.toastr.success('Usuario creado');
+          
           this.cerrarModal();
           this.cargarUsuarios();
         },
         error: () => {
-          //this.toastr.error('Error al crear usuario');
+         
         }
       });
     }
@@ -149,14 +152,14 @@ export class UsuarioComponent implements OnInit {
   }
 
   eliminarUsuario(id: number): void {
-    if (confirm('¿Seguro que desea eliminar este usuario?')) {
+    if (confirm('¿Seguro que desea desactivar este usuario?')) {
       this.usuarioService.eliminarUsuario(id).subscribe({
         next: () => {
-         // this.toastr.success('Usuario eliminado');
+         
           this.cargarUsuarios();
         },
         error: () => {
-        //  this.toastr.error('Error al eliminar');
+          
         }
       });
     }
@@ -164,5 +167,13 @@ export class UsuarioComponent implements OnInit {
 
   get f() {
     return this.usuarioForm.controls;
+  }
+
+  estadoLabel(activo: boolean): string {
+    return activo ? 'Activo' : 'Inactivo';
+  }
+
+  nombreCompleto(usuario: Usuario): string {
+    return `${usuario.nombre} ${usuario.apellido}`;
   }
 }

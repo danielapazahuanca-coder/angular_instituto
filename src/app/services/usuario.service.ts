@@ -3,42 +3,35 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment'; 
+import { environment } from '../../environments/environment';
 
 export interface Usuario {
   id: number;
-  rol_id: number;
-  rol_nombre: string; 
   nombre: string;
-  apellido_paterno: string;
-  apellido_materno: string;
-  ci: string;
+  apellido: string;
   email: string;
-  telefono: string;
-  estado: string;     
-  created_at: string;
+  rol: 'admin' | 'secretaria'; 
+  activo: boolean;
+  fecha_creacion: string; 
 }
 
+
 export interface CrearUsuarioDTO {
-  rol_id: number;
   nombre: string;
-  apellido_paterno: string;
-  apellido_materno: string;
-  ci: string;
+  apellido: string;
   email: string;
-  telefono: string;
   password: string;
+  rol?: 'admin' | 'secretaria'; 
+  activo?: boolean; 
 }
 
 export interface ActualizarUsuarioDTO {
-  rol_id: number;
-  nombre: string;
-  apellido_paterno: string;
-  apellido_materno: string;
-  ci: string;
-  email: string;
-  telefono: string;
-  password?: string;
+  nombre?: string;
+  apellido?: string;
+  email?: string;
+  password?: string; 
+  rol?: 'admin' | 'secretaria';
+  activo?: boolean;
 }
 
 export interface ApiResponse {
@@ -51,7 +44,7 @@ export interface ApiResponse {
   providedIn: 'root'
 })
 export class UsuarioService {
-   private apiUrl = `${environment.apiUrl}/usuarios`;
+  private apiUrl = `${environment.apiUrl}/usuarios`;
 
   constructor(private http: HttpClient) {}
 

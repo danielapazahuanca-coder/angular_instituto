@@ -1,0 +1,126 @@
+<!-- Búsqueda de estudiante -->
+<div class="row">
+  <div class="col-md-6">
+    <form [formGroup]="buscarForm" (ngSubmit)="buscarEstudiantes()">
+      <div class="input-group">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Buscar estudiante (nombre o apellido)..."
+          formControlName="query"
+        />
+        <button class="btn btn-primary" type="submit" [disabled]="buscando">
+          {{ buscando ? 'Buscando...' : 'Buscar' }}
+        </button>
+        <button class="btn btn-outline-secondary" type="button" (click)="limpiarBusqueda()">
+          Limpiar
+        </button>
+      </div>
+      <div *ngIf="f['query'].touched && f['query'].invalid" class="text-danger mt-1">
+        Ingrese al menos 2 caracteres.
+      </div>
+    </form>
+
+    <!-- Dropdown de resultados -->
+    <div *ngIf="estudiantes.length > 0" class="list-group mt-2">
+      <a
+        *ngFor="let est of estudiantes"
+        class="list-group-item list-group-item-action"
+        (click)="seleccionarEstudiante(est)"
+      >
+        {{ est.nombre_completo }} - {{ est.curso_nombre }}
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Detalles del estudiante y deudas -->
+<div *ngIf="estudianteSeleccionado" class="mt-4">
+  <h5>Estudiante: {{ estudianteSeleccionado.nombre_completo }}</h5>
+  <p>Curso: {{ estudianteSeleccionado.curso_nombre }} | Modalidad: {{ estudianteSeleccionado.modalidad }}</p>
+
+  <!-- Tabla de deudas pendientes -->
+  <table class="table table-bordered mt-3">
+    <thead>
+      <tr>
+        <th>Concepto</th>
+        <th>Vencimiento</th>
+        <th>Total</th>
+        <th>Pagado</th>
+        <th>Saldo</th>
+        <th>Estado</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let deuda of deudas">
+        <td>{{ deuda.concepto }}</td>
+        <td>{{ deuda.fecha_vencimiento | date }}</td>
+        <td>{{ deuda.monto_total | currency }}</td>
+        <td>{{ deuda.monto_pagado | currency }}</td>
+        <td class="text-danger fw-bold">{{ deuda.saldo_pendiente | currency }}</td>
+        <td><span [class]="estadoBadge(deuda.estado)">{{ deuda.estado }}</span></td>
+        <td>
+          <button
+            class="btn btn-success btn-sm"
+            (click)="prepararPago(deuda)"
+            data-bs-toggle="modal"
+            data-bs-target="#modalPago"
+          >
+            Cobrar
+          </button>
+        </td>
+      </tr>
+      <tr *ngIf="deudas.length === 0">
+        <td colspan="7" class="text-center">No hay deudas pendientes.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal de Pago -->
+<div class="modal fade" id="modalPago" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Registrar Pago</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form [formGroup]="pagoForm" (ngSubmit)="registrarPago()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>Monto</label>
+            <input type="number" class="form-control" formControlName="monto" step="0.01" />
+            <div *ngIf="p['monto'].touched && p['monto'].invalid" class="text-danger">
+              Monto requerido y debe ser mayor a 0.
+            </div>
+          </div>
+          <div class="mb-3">
+            <label>Método de Pago</label>
+            <select class="form-control" formControlName="metodo_pago">
+              <option *ngFor="let m of metodosPago" [value]="m.value">{{ m.label }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label>N° Recibo (opcional)</label>
+            <input type="text" class="form-control" formControlName="numero_recibo" />
+          </div>
+          <div class="mb-3">
+            <label>Fecha y Hora</label>
+            <input type="datetime-local" class="form-control" formControlName="fecha_pago" />
+          </div>
+          <div class="mb-3">
+            <label>Observaciones</label>
+            <textarea class="form-control" formControlName="observaciones"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="registrandoPago">
+            {{ registrandoPago ? 'Registrando...' : 'Registrar Pago' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

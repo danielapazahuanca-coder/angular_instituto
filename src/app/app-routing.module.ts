@@ -64,6 +64,10 @@ const routes: Routes = [
         path: 'materias',
         loadComponent: () => import('./demo/pages/materias/materia.component').then((c) => c.MateriaComponent)
       },
+       {
+        path: 'cursos',
+        loadComponent: () => import('./demo/pages/cursos/curso.component').then((c) => c.CursoComponent)
+      },
       {
         path: 'periodosAcademicos',
         loadComponent: () => import('./demo/pages/periodosAcademicos/periodo-academico.component').then((c) => c.PeriodoAcademicoComponent)
@@ -75,6 +79,18 @@ const routes: Routes = [
             {
         path: 'estudiantes',
         loadComponent: () => import('./demo/pages/estudiantes/estudiante.component').then((c) => c.EstudianteComponent)
+      },
+       {
+        path: 'registro-completo',
+        loadComponent: () => import('./demo/pages/registro-completo/registro-completo.component').then((c) => c.RegistroCompletoComponent)
+      },
+             {
+        path: 'movimientos',
+        loadComponent: () => import('./demo/pages/movimientos/movimiento-financiero.component').then((c) => c.MovimientoFinancieroComponent)
+      },
+                   {
+        path: 'pago-estudiantes',
+        loadComponent: () => import('./demo/pages/pago-estudiantes/pago-estudiante.component').then((c) => c.PagoEstudianteComponent)
       },
       {
         path: 'apexchart',

@@ -1,0 +1,284 @@
+<!-- Botón principal -->
+<div class="row mb-3">
+  <div class="col-xl-12 d-flex justify-content-between align-items-center">
+    <h5>Lista de Cursos</h5>
+    <button class="btn btn-primary" (click)="abrirModalCrear()">
+      <i class="fa fa-plus"></i> Agregar Curso
+    </button>
+  </div>
+</div>
+
+<!-- Tabla de cursos -->
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Duración</th>
+              <!-- <th>Horario</th> ← Eliminado porque ya no es un campo simple -->
+              <th>Precio Total</th>
+              <th>Mensual</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let curso of cursos; let i = index">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ curso.nombre }}</td>
+              <td>{{ curso.duracion_meses }} mes(es)</td>
+              <!-- <td>{{ curso.horario }}</td> ← Eliminado -->
+              <td>{{ curso.precio_total | currency:'USD':'symbol':'1.2-2' }}</td>
+              <td>{{ curso.precio_mensual | currency:'USD':'symbol':'1.2-2' }}</td>
+              <td>
+                <span [class.text-success]="curso.activo" [class.text-danger]="!curso.activo">
+                  {{ estadoLabel(curso.activo) }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(curso.id)">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarCurso(curso.id!)">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="cursos.length === 0 && !cargando">
+              <td colspan="7" class="text-center">No hay cursos.</td>
+            </tr>
+            <tr *ngIf="cargando">
+              <td colspan="7" class="text-center">Cargando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal de creación/edición -->
+<div class="modal fade show" *ngIf="modalVisible" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editando ? 'Editar Curso' : 'Registrar Curso' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="cursoForm">
+          <!-- Nombre -->
+          <div class="mb-3">
+            <label class="form-label">Nombre del curso *</label>
+            <input
+              formControlName="nombre"
+              class="form-control"
+              [class.is-invalid]="f['nombre'].touched && f['nombre'].invalid"
+              placeholder="Ej: Programación Web"
+            />
+            <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].invalid">
+              El nombre del curso es requerido.
+            </div>
+          </div>
+
+          <!-- Duración y Modalidad -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Duración (meses) *</label>
+              <select
+                formControlName="duracion_meses"
+                class="form-select"
+                [class.is-invalid]="f['duracion_meses'].touched && f['duracion_meses'].invalid"
+              >
+                <option *ngFor="let op of duracionOpciones" [value]="op.value">
+                  {{ op.label }}
+                </option>
+              </select>
+              <div class="invalid-feedback" *ngIf="f['duracion_meses'].touched && f['duracion_meses'].invalid">
+                Seleccione una duración válida.
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Modalidad *</label>
+              <select
+                formControlName="modalidad"
+                class="form-select"
+                [class.is-invalid]="f['modalidad'].touched && f['modalidad'].invalid"
+              >
+                <option *ngFor="let op of modalidadOpciones" [value]="op.value">
+                  {{ op.label }}
+                </option>
+              </select>
+              <div class="invalid-feedback" *ngIf="f['modalidad'].touched && f['modalidad'].invalid">
+                Seleccione una modalidad.
+              </div>
+            </div>
+          </div>
+
+          <!-- Precios -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Precio Total (USD) *</label>
+              <input
+                formControlName="precio_total"
+                type="number"
+                step="0.01"
+                class="form-control"
+                [class.is-invalid]="f['precio_total'].touched && f['precio_total'].invalid"
+              />
+              <div class="invalid-feedback" *ngIf="f['precio_total'].touched && f['precio_total'].invalid">
+                Precio total requerido y ≥ 0.
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Precio Mensual (USD) *</label>
+              <input
+                formControlName="precio_mensual"
+                type="number"
+                step="0.01"
+                class="form-control"
+                [class.is-invalid]="f['precio_mensual'].touched && f['precio_mensual'].invalid"
+              />
+              <div class="invalid-feedback" *ngIf="f['precio_mensual'].touched && f['precio_mensual'].invalid">
+                Precio mensual requerido y ≥ 0.
+              </div>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea
+              formControlName="descripcion"
+              class="form-control"
+              rows="3"
+              placeholder="Breve descripción del curso (opcional)"
+            ></textarea>
+          </div>
+
+          <!-- Activo -->
+          <div class="mb-3">
+            <div class="form-check">
+              <input
+                formControlName="activo"
+                type="checkbox"
+                class="form-check-input"
+                id="activoCheck"
+              />
+              <label class="form-check-label" for="activoCheck">Curso activo</label>
+            </div>
+          </div>
+
+          <!-- === TABLA DE HORARIOS === -->
+          <div class="mb-4 mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label mb-0">Horarios del curso *</label>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="agregarHorario()">
+                <i class="fa fa-plus"></i> Agregar horario
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th>Turno</th>
+                    <th>Hora inicio</th>
+                    <th>Hora fin</th>
+                    <th>Días de la semana</th>
+                    <th style="width: 60px;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody formArrayName="horarios">
+                  <tr *ngFor="let horario of horarios.controls; let i = index" [formGroupName]="i">
+                    <!-- Turno -->
+                    <td>
+                      <input
+                        formControlName="turno"
+                        class="form-control form-control-sm"
+                        [class.is-invalid]="horario.get('turno')?.invalid && horario.get('turno')?.touched"
+                        placeholder="Mañana, Tarde..."
+                      />
+                      <div class="invalid-feedback" *ngIf="horario.get('turno')?.invalid && horario.get('turno')?.touched">
+                        Turno requerido
+                      </div>
+                    </td>
+
+                    <!-- Hora inicio -->
+                    <td>
+                      <input
+                        formControlName="hora_inicio"
+                        type="text"
+                        class="form-control form-control-sm"
+                        [class.is-invalid]="horario.get('hora_inicio')?.invalid && horario.get('hora_inicio')?.touched"
+                        placeholder="HH:mm"
+                      />
+                      <div class="invalid-feedback" *ngIf="horario.get('hora_inicio')?.invalid && horario.get('hora_inicio')?.touched">
+                        Formato HH:mm
+                      </div>
+                    </td>
+
+                    <!-- Hora fin -->
+                    <td>
+                      <input
+                        formControlName="hora_fin"
+                        type="text"
+                        class="form-control form-control-sm"
+                        [class.is-invalid]="horario.get('hora_fin')?.invalid && horario.get('hora_fin')?.touched"
+                        placeholder="HH:mm"
+                      />
+                      <div class="invalid-feedback" *ngIf="horario.get('hora_fin')?.invalid && horario.get('hora_fin')?.touched">
+                        Formato HH:mm
+                      </div>
+                    </td>
+
+                    <!-- Días de la semana -->
+                    <td>
+                      <input
+                        formControlName="dias_semana"
+                        class="form-control form-control-sm"
+                        [class.is-invalid]="horario.get('dias_semana')?.invalid && horario.get('dias_semana')?.touched"
+                        placeholder="Lunes,Miércoles..."
+                      />
+                      <div class="invalid-feedback" *ngIf="horario.get('dias_semana')?.invalid && horario.get('dias_semana')?.touched">
+                        Días requeridos
+                      </div>
+                    </td>
+
+                    <!-- Acciones -->
+                    <td class="text-center">
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-danger"
+                        (click)="eliminarHorario(i)"
+                        [disabled]="horarios.length === 1"
+                        title="Eliminar horario"
+                      >
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="horarios.length === 0">
+                    <td colspan="5" class="text-center">No hay horarios agregados.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="enviarFormulario()">
+          {{ editando ? 'Actualizar' : 'Registrar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

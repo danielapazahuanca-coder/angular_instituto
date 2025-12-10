@@ -1,0 +1,182 @@
+<!-- Botón principal -->
+<div class="row mb-3">
+  <div class="col-xl-12 d-flex justify-content-between align-items-center">
+    <h5>Registro de Movimientos Financieros</h5>
+    <button class="btn btn-primary" (click)="abrirModalCrear()">
+      <i class="fa fa-plus"></i> Nuevo Movimiento
+    </button>
+  </div>
+</div>
+
+<!-- Tabla de movimientos -->
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Tipo</th>
+              <th>Concepto</th>
+              <th>Monto</th>
+              <th>Fecha</th>
+              <th>Método</th>
+              <th>Comprobante</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of movimientos; let i = index">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>
+                <span [class]="tipoMovimientoClass(m.tipo_movimiento)">
+                  {{ tipoMovimientoLabel(m.tipo_movimiento) }}
+                </span>
+              </td>
+              <td title="{{ m.concepto }}">{{ m.concepto | slice:0:30 }}{{ m.concepto.length > 30 ? '...' : '' }}</td>
+              <td>
+                <span [class]="m.tipo_movimiento === 'ingreso' ? 'text-success fw-bold' : 'text-danger fw-bold'">
+                  {{ (m.tipo_movimiento === 'ingreso' ? '+' : '-') + (m.monto | currency:'USD':'symbol':'1.2-2') }}
+                </span>
+              </td>
+              <td>{{ m.fecha_movimiento | date:'dd/MM/yyyy' }}</td>
+              <td>{{ m.metodo_pago | titlecase }}</td>
+              <td>{{ m.comprobante || '—' }}</td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(m.id)">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarMovimiento(m.id!)">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="movimientos.length === 0 && !cargando">
+              <td colspan="8" class="text-center">No hay movimientos registrados.</td>
+            </tr>
+            <tr *ngIf="cargando">
+              <td colspan="8" class="text-center">Cargando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Modal de creación/edición -->
+<div class="modal fade show" *ngIf="modalVisible" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editando ? 'Editar Movimiento' : 'Registrar Nuevo Movimiento' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="movimientoForm">
+          <!-- Tipo de movimiento (ingreso/egreso) -->
+          <div class="mb-3">
+            <label class="form-label">Tipo de movimiento *</label>
+            <select formControlName="tipo_movimiento" class="form-select" [class.is-invalid]="f['tipo_movimiento'].touched && f['tipo_movimiento'].invalid">
+              <option value="ingreso">Ingreso</option>
+              <option value="egreso">Egreso</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="f['tipo_movimiento'].touched && f['tipo_movimiento'].invalid">
+              Seleccione tipo de movimiento.
+            </div>
+          </div>
+
+          <!-- Tipo de movimiento detallado (pago_estudiante, salario, etc.) -->
+          <div class="mb-3">
+            <label class="form-label">Categoría *</label>
+            <select formControlName="tipo_movimiento_id" class="form-select" [class.is-invalid]="f['tipo_movimiento_id'].touched && f['tipo_movimiento_id'].invalid">
+              <option *ngFor="let t of tipoMovimientoOpciones" [value]="t.id">
+                {{ t.descripcion }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="f['tipo_movimiento_id'].touched && f['tipo_movimiento_id'].invalid">
+              Seleccione una categoría.
+            </div>
+          </div>
+
+          <!-- Concepto -->
+          <div class="mb-3">
+            <label class="form-label">Concepto *</label>
+            <input
+              formControlName="concepto"
+              class="form-control"
+              [class.is-invalid]="f['concepto'].touched && f['concepto'].invalid"
+              placeholder="Ej: Pago de matrícula, Compra de materiales..."
+            />
+            <div class="invalid-feedback" *ngIf="f['concepto'].touched && f['concepto'].invalid">
+              El concepto es requerido.
+            </div>
+          </div>
+
+          <!-- Monto -->
+          <div class="mb-3">
+            <label class="form-label">Monto (BOB) *</label>
+            <input
+              formControlName="monto"
+              type="number"
+              step="0.01"
+              class="form-control"
+              [class.is-invalid]="f['monto'].touched && f['monto'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['monto'].touched && f['monto'].invalid">
+              Monto requerido y mayor que 0.
+            </div>
+          </div>
+
+          <!-- Fecha -->
+          <div class="mb-3">
+            <label class="form-label">Fecha del movimiento *</label>
+            <input
+              formControlName="fecha_movimiento"
+              type="date"
+              class="form-control"
+              [class.is-invalid]="f['fecha_movimiento'].touched && f['fecha_movimiento'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['fecha_movimiento'].touched && f['fecha_movimiento'].invalid">
+              Fecha requerida.
+            </div>
+          </div>
+
+          <!-- Método de pago -->
+          <div class="mb-3">
+            <label class="form-label">Método de pago *</label>
+            <select formControlName="metodo_pago" class="form-select" [class.is-invalid]="f['metodo_pago'].touched && f['metodo_pago'].invalid">
+              <option *ngFor="let m of metodoPagoOpciones" [value]="m.value">
+                {{ m.label }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="f['metodo_pago'].touched && f['metodo_pago'].invalid">
+              Seleccione método de pago.
+            </div>
+          </div>
+
+          <!-- Comprobante -->
+          <div class="mb-3">
+            <label class="form-label">N° Comprobante (opcional)</label>
+            <input formControlName="comprobante" class="form-control" placeholder="Ej: REC-001, FACT-123" />
+          </div>
+
+          <!-- Descripción -->
+          <div class="mb-3">
+            <label class="form-label">Descripción (opcional)</label>
+            <textarea formControlName="descripcion" class="form-control" rows="2" placeholder="Detalles adicionales"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="enviarFormulario()">
+          {{ editando ? 'Actualizar' : 'Registrar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

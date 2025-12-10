@@ -1,0 +1,374 @@
+<div *ngIf="modo === 'lista'">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Estudiantes Inscritos</h4>
+    <button class="btn btn-primary" (click)="irANuevoRegistro()">Nuevo Estudiante</button>
+  </div>
+
+  <div *ngIf="cargando" class="text-center">Cargando...</div>
+
+  <div *ngIf="!cargando && estudiantesInscritos.length === 0" class="alert alert-info">
+    No hay estudiantes inscritos.
+  </div>
+
+  <table *ngIf="!cargando && estudiantesInscritos.length > 0" class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Curso</th>
+        <th>Email</th>
+        <th>Monto Total</th>
+        <th>Inicio</th>
+        <th>Fin</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let est of estudiantesInscritos">
+        <td>{{ est.estudiante_id }}</td>
+        <td>{{ est.nombre }} {{ est.apellido_paterno }}</td>
+        <td>{{ est.curso }}</td>
+        <td>{{ est.email }}</td>
+        <td>{{ est.monto_total | currency:'BOB':'symbol':'1.2-2' }}</td>
+        <td>{{ est.fecha_inicio }}</td>
+        <td>{{ est.fecha_fin_estimada }}</td>
+        <td>
+          <button 
+            class="btn btn-sm btn-warning" 
+            (click)="editarEstudiante(est)"
+            title="Editar">
+            <i class="fa fa-edit"></i>
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div *ngIf="modo === 'registro'">
+<div class="row mb-3">
+  <div class="col-xl-12">
+    <h4>{{ esEdicion ? 'Editar' : 'Nuevo' }} Registro de Estudiante</h4>
+    <p class="text-muted">
+      {{ esEdicion ? 'Modificar datos del estudiante inscrito' : 'Registro de estudiante con inscripción y pago inicial' }}
+    </p>
+  </div>
+</div>
+
+<form [formGroup]="registroForm" (ngSubmit)="enviarFormulario()">
+  
+  <!-- SECCIÓN 1: DATOS DEL ESTUDIANTE -->
+  <div class="row">
+    <div class="col-xl-12">
+      <app-card cardTitle="Datos del Estudiante" [options]="false">
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label">Nombre <span class="text-danger">*</span></label>
+            <input 
+              formControlName="nombre" 
+              class="form-control" 
+              [class.is-invalid]="f['nombre'].touched && f['nombre'].invalid"
+              placeholder="Ingrese el nombre"
+            />
+            <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].invalid">
+              El nombre es requerido
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <label class="form-label">Apellido Paterno <span class="text-danger">*</span></label>
+            <input 
+              formControlName="apellido_paterno" 
+              class="form-control" 
+              [class.is-invalid]="f['apellido_paterno'].touched && f['apellido_paterno'].invalid"
+              placeholder="Ingrese apellido paterno"
+            />
+            <div class="invalid-feedback" *ngIf="f['apellido_paterno'].touched && f['apellido_paterno'].invalid">
+              El apellido paterno es requerido
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <label class="form-label">Apellido Materno <span class="text-muted">(Opcional)</span></label>
+            <input 
+              formControlName="apellido_materno" 
+              class="form-control"
+              placeholder="Ingrese apellido materno"
+            />
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label">C.I. <span class="text-muted">(Opcional)</span></label>
+            <input 
+              formControlName="ci" 
+              class="form-control"
+              placeholder="Ej: 1234567 LP"
+            />
+          </div>
+          
+          <div class="col-md-4">
+            <label class="form-label">Teléfono <span class="text-muted">(Opcional)</span></label>
+            <input 
+              formControlName="telefono" 
+              class="form-control"
+              placeholder="Ej: 78901234"
+            />
+          </div>
+          
+          <div class="col-md-4">
+            <label class="form-label">Email <span class="text-danger">*</span></label>
+            <input 
+              formControlName="email" 
+              type="email" 
+              class="form-control" 
+              [class.is-invalid]="f['email'].touched && f['email'].invalid"
+              placeholder="correo@ejemplo.com"
+            />
+            <div class="invalid-feedback" *ngIf="f['email'].touched && f['email'].invalid">
+              Email válido es requerido
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Dirección <span class="text-muted">(Opcional)</span></label>
+            <input 
+              formControlName="direccion" 
+              class="form-control"
+              placeholder="Ingrese la dirección"
+            />
+          </div>
+          
+          <div class="col-md-6">
+            <label class="form-label">Fecha de Nacimiento <span class="text-muted">(Opcional)</span></label>
+            <input 
+              formControlName="fecha_nacimiento" 
+              type="date" 
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12">
+            <label class="form-label">Observaciones <span class="text-muted">(Opcional)</span></label>
+            <textarea 
+              formControlName="observaciones_estudiante" 
+              class="form-control" 
+              rows="2"
+              placeholder="Información adicional del estudiante"
+            ></textarea>
+          </div>
+        </div>
+      </app-card>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2: DATOS DEL CURSO -->
+  <div class="row mt-3">
+    <div class="col-xl-12">
+      <app-card cardTitle="Datos del Curso" [options]="false">
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label">Curso <span class="text-danger">*</span></label>
+            <select 
+              formControlName="curso_id" 
+              class="form-select" 
+              [class.is-invalid]="f['curso_id'].touched && f['curso_id'].invalid"
+            >
+              <option [ngValue]="null">-- Seleccionar --</option>
+              <option *ngFor="let curso of cursos" [ngValue]="curso.id">
+                {{ curso.nombre }} ({{ curso.duracion_meses }} meses - Bs. {{ curso.precio_base }})
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="f['curso_id'].touched && f['curso_id'].invalid">
+              Debe seleccionar un curso
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <label class="form-label">Fecha de Inicio <span class="text-danger">*</span></label>
+            <input 
+              formControlName="fecha_inicio" 
+              type="date" 
+              class="form-control" 
+              [class.is-invalid]="f['fecha_inicio'].touched && f['fecha_inicio'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['fecha_inicio'].touched && f['fecha_inicio'].invalid">
+              La fecha de inicio es requerida
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <label class="form-label">Fecha de Fin Estimada</label>
+            <input 
+              formControlName="fecha_fin_estimada" 
+              type="date" 
+              class="form-control"
+              readonly
+            />
+            <small class="text-muted">Se calcula automáticamente</small>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4">
+            <label class="form-label">Duración (meses) <span class="text-danger">*</span></label>
+            <input 
+              formControlName="duracion_meses" 
+              type="number" 
+              class="form-control" 
+              [class.is-invalid]="f['duracion_meses'].touched && f['duracion_meses'].invalid"
+              min="1"
+            />
+            <div class="invalid-feedback" *ngIf="f['duracion_meses'].touched && f['duracion_meses'].invalid">
+              La duración es requerida (mínimo 1 mes)
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <label class="form-label">Monto Mensual (Bs.) <span class="text-danger">*</span></label>
+            <input 
+              formControlName="monto_mensual" 
+              type="number" 
+              step="0.01" 
+              class="form-control" 
+              [class.is-invalid]="f['monto_mensual'].touched && f['monto_mensual'].invalid"
+              min="0"
+            />
+            <div class="invalid-feedback" *ngIf="f['monto_mensual'].touched && f['monto_mensual'].invalid">
+              El monto mensual es requerido
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <label class="form-label">Monto de Inscripción (Bs.) <span class="text-danger">*</span></label>
+            <input 
+              formControlName="monto_inscripcion" 
+              type="number" 
+              step="0.01" 
+              class="form-control" 
+              [class.is-invalid]="f['monto_inscripcion'].touched && f['monto_inscripcion'].invalid"
+              min="0"
+            />
+            <div class="invalid-feedback" *ngIf="f['monto_inscripcion'].touched && f['monto_inscripcion'].invalid">
+              El monto de inscripción es requerido
+            </div>
+          </div>
+        </div>
+      </app-card>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 3: CUOTA -->
+  <div class="row mt-3">
+    <div class="col-xl-12">
+      <app-card cardTitle="Cuota" [options]="false">
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label class="form-label">Tipo de Pago <span class="text-danger">*</span></label>
+            <select formControlName="tipo_pago" class="form-select">
+              <option *ngFor="let tipo of tiposPago" [value]="tipo.value">
+                {{ tipo.label }}
+              </option>
+            </select>
+            <small class="text-muted" *ngIf="f['tipo_pago'].value === 'total'">
+              El estudiante pagará todo el curso de una vez
+            </small>
+            <small class="text-muted" *ngIf="f['tipo_pago'].value === 'mensual'">
+              Se generarán cobros mensuales
+            </small>
+          </div>
+          
+          <div class="col-md-3">
+            <label class="form-label">Descuento (%)</label>
+            <input 
+              formControlName="descuento" 
+              type="number" 
+              step="0.01" 
+              class="form-control"
+              min="0"
+              max="100"
+              placeholder="0"
+            />
+            <small class="text-muted">Descuento sobre el total</small>
+          </div>
+          
+          <div class="col-md-6">
+            <label class="form-label">Observaciones</label>
+            <textarea 
+              formControlName="observaciones_inscripcion" 
+              class="form-control" 
+              rows="2"
+              placeholder="Detalles adicionales sobre el pago o inscripción"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Resumen de Montos -->
+        <div class="row">
+          <div class="col-12">
+            <div class="alert alert-info">
+              <h6 class="mb-2">Resumen de Cuota:</h6>
+              <div class="row">
+                <div class="col-md-3">
+                  <strong>Subtotal:</strong><br>
+                  Bs. {{ subtotal.toFixed(2) }}
+                </div>
+                <div class="col-md-3">
+                  <strong>Descuento ({{ f['descuento'].value }}%):</strong><br>
+                  <span class="text-success">- Bs. {{ montoDescuento.toFixed(2) }}</span>
+                </div>
+                <div class="col-md-3">
+                  <strong>Monto Total:</strong><br>
+                  <span class="text-primary">Bs. {{ montoTotal.toFixed(2) }}</span>
+                </div>
+                <div class="col-md-3">
+                  <strong>Saldo Pendiente:</strong><br>
+                  <span class="text-danger">Bs. {{ saldoPendiente.toFixed(2) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </app-card>
+    </div>
+  </div>
+
+  <!-- BOTONES -->
+  <div class="row mt-3">
+    <div class="col-xl-12">
+      <div class="d-flex justify-content-end gap-2">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="volverALista()"
+          [disabled]="cargando"
+        >
+          <i class="fa fa-times"></i> Cancelar
+        </button>
+        
+        <button 
+          type="submit" 
+          class="btn btn-primary" 
+          [disabled]="cargando || registroForm.invalid"
+        >
+          <i class="fa fa-save"></i> 
+          {{ cargando ? 'Guardando...' : (esEdicion ? 'Actualizar' : 'Registrar') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</form>
+</div>
+
+<!-- Loading Overlay -->
+<div *ngIf="cargando" class="overlay">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando...</span>
+  </div>
+</div>

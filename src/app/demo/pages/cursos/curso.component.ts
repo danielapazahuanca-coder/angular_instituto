@@ -81,6 +81,26 @@ export class CursoComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarCursos();
+
+    this.cursoForm.get('precio_total')?.valueChanges.subscribe(() => {
+      this.calcularPrecioMensual();
+    });
+
+    this.cursoForm.get('duracion_meses')?.valueChanges.subscribe(() => {
+      this.calcularPrecioMensual();
+    });
+  }
+
+    private calcularPrecioMensual(): void {
+    const total = this.cursoForm.get('precio_total')?.value || 0;
+    const duracion = this.cursoForm.get('duracion_meses')?.value || 1;
+
+    if (duracion > 0) {
+      const mensual = total / duracion;
+      this.cursoForm.patchValue({
+        precio_mensual: Math.round(mensual * 100) / 100
+      }, { emitEvent: false }); 
+    }
   }
 
   cargarCursos(): void {
@@ -124,13 +144,11 @@ abrirModalEditar(cursoId: number): void {
       if (res.success && res.data) {
         const curso = res.data as Curso;
 
-        // 🔍 LOG: Ver los datos completos del curso (¡con horarios!)
-        console.log('📚 Curso cargado para edición:', curso);
+        console.log(' Curso cargado para edición:', curso);
 
         this.editando = true;
         this.cursoActual = curso;
 
-        // Rellenar formulario principal
         this.cursoForm.patchValue({
           id: curso.id,
           nombre: curso.nombre,
@@ -142,7 +160,6 @@ abrirModalEditar(cursoId: number): void {
           activo: curso.activo
         });
 
-        // Limpiar y cargar horarios
         this.horarios.clear();
 
         if (curso.horarios && curso.horarios.length > 0) {
@@ -160,13 +177,13 @@ abrirModalEditar(cursoId: number): void {
 
         this.modalVisible = true;
       } else {
-        console.error('❌ Curso no encontrado o respuesta inválida');
+        console.error(' Curso no encontrado o respuesta inválida');
         // this.toastr.error('Curso no encontrado');
       }
     },
     error: (err) => {
       this.cargando = false;
-      console.error('❌ Error al cargar el curso para edición:', err);
+      console.error(' Error al cargar el curso para edición:', err);
       // this.toastr.error('Error al cargar el curso');
     }
   });
@@ -183,16 +200,16 @@ abrirModalEditar(cursoId: number): void {
   }
 
 enviarFormulario(): void {
-  console.log('🔍 Iniciando envío del formulario...');
+  console.log(' Iniciando envío del formulario...');
 
   if (this.cursoForm.invalid) {
-    console.warn('⚠️ Formulario inválido. Marcando todos los campos como tocados.');
+    console.warn(' Formulario inválido. Marcando todos los campos como tocados.');
     this.cursoForm.markAllAsTouched();
     this.horarios.markAllAsTouched();
 
     // Opcional: imprimir qué controles están inválidos
-    console.log('📋 Estado del formulario:', this.cursoForm);
-    console.log('📋 Horarios inválidos:', this.horarios.controls.map((h, i) => ({
+    console.log('Estado del formulario:', this.cursoForm);
+    console.log('Horarios inválidos:', this.horarios.controls.map((h, i) => ({
       index: i,
       valid: h.valid,
       errors: h.errors,
@@ -203,10 +220,10 @@ enviarFormulario(): void {
   }
 
   const formValue = this.cursoForm.value;
-  console.log('✅ Formulario válido. Datos a enviar:', formValue);
+  console.log(' Formulario válido. Datos a enviar:', formValue);
 
   if (this.editando && this.cursoActual) {
-    console.log('✏️ Modo: actualización de curso (ID:', this.cursoActual.id, ')');
+    console.log(' Modo: actualización de curso (ID:', this.cursoActual.id, ')');
 
     const datos: ActualizarCursoDTO = {
       nombre: formValue.nombre,
@@ -218,17 +235,17 @@ enviarFormulario(): void {
       activo: formValue.activo
     };
 
-    console.log('📤 Enviando datos de actualización:', datos);
+    console.log(' Enviando datos de actualización:', datos);
 
     this.cursoService.actualizarCurso(this.cursoActual.id, datos).subscribe({
       next: (response) => {
-        console.log('✅ Respuesta del backend (actualización):', response);
+        console.log(' Respuesta del backend (actualización):', response);
        
         this.cerrarModal();
         this.cargarCursos();
       },
       error: (error) => {
-        console.error('❌ Error al actualizar curso:', error);
+        console.error(' Error al actualizar curso:', error);
         
       }
     });
@@ -246,16 +263,16 @@ enviarFormulario(): void {
       horarios: formValue.horarios
     };
 
-    console.log('📤 Enviando datos de creación:', datos);
+    console.log(' Enviando datos de creación:', datos);
 
     this.cursoService.crearCurso(datos).subscribe({
       next: (response) => {
-        console.log('✅ Respuesta del backend (creación):', response);
+        console.log(' Respuesta del backend (creación):', response);
         this.cerrarModal();
         this.cargarCursos();
       },
       error: (error) => {
-        console.error('❌ Error al crear curso:', error);
+        console.error(' Error al crear curso:', error);
       }
     });
   }

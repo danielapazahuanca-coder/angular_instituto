@@ -138,13 +138,14 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">Precio Mensual (USD) *</label>
-              <input
-                formControlName="precio_mensual"
-                type="number"
-                step="0.01"
-                class="form-control"
-                [class.is-invalid]="f['precio_mensual'].touched && f['precio_mensual'].invalid"
-              />
+                  <input
+                    formControlName="precio_mensual"
+                    type="number"
+                    step="0.01"
+                    class="form-control"
+                    [class.is-invalid]="f['precio_mensual'].touched && f['precio_mensual'].invalid"
+                    readonly
+                  />
               <div class="invalid-feedback" *ngIf="f['precio_mensual'].touched && f['precio_mensual'].invalid">
                 Precio mensual requerido y ≥ 0.
               </div>

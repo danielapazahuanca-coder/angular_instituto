@@ -12,6 +12,7 @@ export interface Curso {
   precio_base: number;
   descripcion?: string;
   activo?: boolean;
+  precio_mensual?: string;
 }
 
 export interface RegistroCompletoDTO {

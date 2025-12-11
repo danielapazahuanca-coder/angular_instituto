@@ -60,16 +60,16 @@
         <td>{{ deuda.monto_pagado | currency }}</td>
         <td class="text-danger fw-bold">{{ deuda.saldo_pendiente | currency }}</td>
         <td><span [class]="estadoBadge(deuda.estado)">{{ deuda.estado }}</span></td>
-        <td>
-          <button
-            class="btn btn-success btn-sm"
-            (click)="prepararPago(deuda)"
-            data-bs-toggle="modal"
-            data-bs-target="#modalPago"
-          >
-            Cobrar
-          </button>
-        </td>
+          <td>
+            <button
+              *ngIf="deuda.estado !== 'pagado'"
+              class="btn btn-success btn-sm"
+              (click)="abrirModalPago(deuda)"
+            >
+              Cobrar
+            </button>
+            <span *ngIf="deuda.estado === 'pagado'" class="text-muted">Pagado</span>
+          </td>
       </tr>
       <tr *ngIf="deudas.length === 0">
         <td colspan="7" class="text-center">No hay deudas pendientes.</td>
@@ -78,13 +78,13 @@
   </table>
 </div>
 
-<!-- Modal de Pago -->
-<div class="modal fade" id="modalPago" tabindex="-1">
+<!-- Modal de Pago (controlado manualmente) -->
+<div class="modal fade show" *ngIf="modalPagoVisible" style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Registrar Pago</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close" (click)="cerrarModalPago()"></button>
       </div>
       <form [formGroup]="pagoForm" (ngSubmit)="registrarPago()">
         <div class="modal-body">
@@ -115,7 +115,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-secondary" (click)="cerrarModalPago()">Cancelar</button>
           <button type="submit" class="btn btn-primary" [disabled]="registrandoPago">
             {{ registrandoPago ? 'Registrando...' : 'Registrar Pago' }}
           </button>

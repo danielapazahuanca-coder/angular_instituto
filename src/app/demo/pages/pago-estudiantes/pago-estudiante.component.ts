@@ -21,6 +21,7 @@ export class PagoEstudianteComponent implements OnInit {
   cargando = false;
   buscando = false;
   registrandoPago = false;
+  modalPagoVisible = false;
 
   estudiantes: EstudianteSearchResult[] = [];
   deudas: DeudaPendiente[] = [];
@@ -58,38 +59,53 @@ export class PagoEstudianteComponent implements OnInit {
     return now.toISOString().substring(0, 16); 
   }
 
-buscarEstudiantes(): void {
-  if (this.buscarForm.invalid) {
-    this.buscarForm.markAllAsTouched();
-    return;
+    abrirModalPago(deuda: DeudaPendiente): void {
+    this.prepararPago(deuda);
+    this.modalPagoVisible = true;
+  }
+    cerrarModalPago(): void {
+    this.modalPagoVisible = false;
+    this.pagoForm.reset({
+      cobro_id: null,
+      monto: 0,
+      metodo_pago: 'efectivo',
+      numero_recibo: '',
+      fecha_pago: this.fechaHoy(),
+      observaciones: ''
+    });
   }
 
-  const query = this.buscarForm.get('query')?.value.trim();
-  if (!query || query.length < 2) return;
+  buscarEstudiantes(): void {
+    if (this.buscarForm.invalid) {
+      this.buscarForm.markAllAsTouched();
+      return;
+    }
 
-  this.buscando = true;
-  this.estudianteSeleccionado = null;
-  this.deudas = [];
+    const query = this.buscarForm.get('query')?.value.trim();
+    if (!query || query.length < 2) return;
 
-  this.pagoService.buscarEstudiantes({ query }).subscribe({
-    next: (res) => {
-      this.buscando = false;
-      // ✅ CORREGIDO: accede a res.data.estudiantes, no a res.data directamente
-      if (res.success && res.data?.estudiantes) {
-        this.estudiantes = res.data.estudiantes as EstudianteSearchResult[];
-      } else {
+    this.buscando = true;
+    this.estudianteSeleccionado = null;
+    this.deudas = [];
+
+    this.pagoService.buscarEstudiantes({ query }).subscribe({
+      next: (res) => {
+        this.buscando = false;
+        if (res.success && res.data?.estudiantes) {
+          this.estudiantes = res.data.estudiantes as EstudianteSearchResult[];
+        } else {
+          this.estudiantes = [];
+        }
+      },
+      error: () => {
+        this.buscando = false;
         this.estudiantes = [];
       }
-    },
-    error: () => {
-      this.buscando = false;
-      this.estudiantes = [];
-    }
-  });
-}
+    });
+  }
 
 cargarDeudasPendientes(inscripcionId: number): void {
-  // 🔴 ¡Agrega esta validación!
+
   if (!inscripcionId || inscripcionId <= 0) {
     console.warn('ID de inscripción inválido:', inscripcionId);
     this.deudas = [];
@@ -111,7 +127,7 @@ cargarDeudasPendientes(inscripcionId: number): void {
   });
 }
 seleccionarEstudiante(estudiante: EstudianteSearchResult): void {
-  console.log('Estudiante seleccionado:', estudiante); // 👈 Verifica inscripcion_id
+  console.log('Estudiante seleccionado:', estudiante); 
 
   if (!estudiante?.inscripcion_id) {
     console.error('El estudiante no tiene inscripcion_id válido');
@@ -138,42 +154,52 @@ seleccionarEstudiante(estudiante: EstudianteSearchResult): void {
     });
   }
 
-  registrarPago(): void {
-    if (this.pagoForm.invalid) {
-      this.pagoForm.markAllAsTouched();
-      return;
-    }
-
-    this.registrandoPago = true;
-    const pagoData: RegistrarPagoDTO = this.pagoForm.value;
-
-    this.pagoService.registrarPago(pagoData).subscribe({
-      next: (res) => {
-        this.registrandoPago = false;
-        if (res.success) {
-          // this.toastr.success('Pago registrado exitosamente');
-          // Actualizar lista de deudas
-          if (this.estudianteSeleccionado) {
-            this.cargarDeudasPendientes(this.estudianteSeleccionado.estudiante_id);
-          }
-          this.pagoForm.reset({
-            cobro_id: null,
-            monto: 0,
-            metodo_pago: 'efectivo',
-            numero_recibo: '',
-            fecha_pago: this.fechaHoy(),
-            observaciones: ''
-          });
-        } else {
-          // this.toastr.error(res.message || 'Error al registrar pago');
-        }
-      },
-      error: () => {
-        this.registrandoPago = false;
-        // this.toastr.error('Error al registrar el pago');
-      }
-    });
+registrarPago(): void {
+  if (this.pagoForm.invalid) {
+    this.pagoForm.markAllAsTouched();
+    return;
   }
+  const raw = this.pagoForm.getRawValue();
+  this.registrandoPago = true;
+    const pagoData: RegistrarPagoDTO = {
+    cobro_id: raw.cobro_id,
+    inscripcion_id: this.estudianteSeleccionado.inscripcion_id, 
+    monto: parseFloat(raw.monto), 
+    metodo_pago: raw.metodo_pago,
+    numero_recibo: raw.numero_recibo?.trim() || null,
+    fecha_pago: new Date(raw.fecha_pago).toISOString(), 
+    observaciones: raw.observaciones?.trim() || null,
+    usuario_id: 1, 
+    tipo_pago: 'deuda_existente' 
+  };
+   console.log('Datos enviados al backend:', pagoData);
+
+  this.pagoService.registrarPago(pagoData).subscribe({
+    next: (res) => {
+      this.registrandoPago = false;
+      if (res.success) {
+        if (this.estudianteSeleccionado) {
+
+          this.cargarDeudasPendientes(this.estudianteSeleccionado.inscripcion_id);
+        }
+        this.pagoForm.reset({
+          cobro_id: null,
+          monto: 0,
+          metodo_pago: 'efectivo',
+          numero_recibo: '',
+          fecha_pago: this.fechaHoy(),
+          observaciones: ''
+        });
+      } else {
+        // this.toastr.error(res.message || 'Error al registrar pago');
+      }
+    },
+    error: () => {
+      this.registrandoPago = false;
+      // this.toastr.error('Error al registrar el pago');
+    }
+  });
+}
 
   get f() {
     return this.buscarForm.controls;

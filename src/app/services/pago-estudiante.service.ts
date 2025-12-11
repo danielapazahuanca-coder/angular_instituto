@@ -5,8 +5,6 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-// === Interfaces ===
-
 export interface EstudianteSearchResult {
   estudiante_id: number;
   nombre_completo: string;
@@ -94,12 +92,15 @@ export interface BuscarEstudiantesDTO {
 
 export interface RegistrarPagoDTO {
   cobro_id: number;
+  inscripcion_id: number;
   monto: number;
   metodo_pago: 'efectivo' | 'qr' | 'transferencia' | 'tarjeta';
   numero_recibo?: string;
   fecha_pago?: string; 
   observaciones?: string;
   usuario_registro_id?: number; 
+  usuario_id?: number;
+  tipo_pago: 'deuda_existente';
 }
 
 export interface ObtenerDeudasDTO {

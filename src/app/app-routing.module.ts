@@ -88,9 +88,13 @@ const routes: Routes = [
         path: 'movimientos',
         loadComponent: () => import('./demo/pages/movimientos/movimiento-financiero.component').then((c) => c.MovimientoFinancieroComponent)
       },
-                   {
+         {
         path: 'pago-estudiantes',
         loadComponent: () => import('./demo/pages/pago-estudiantes/pago-estudiante.component').then((c) => c.PagoEstudianteComponent)
+      },
+       {
+        path: 'cobros-dias',
+        loadComponent: () => import('./demo/pages/cobros-dias/cobros-del-dia.component').then((c) => c.CobrosDelDiaComponent)
       },
       {
         path: 'apexchart',

@@ -186,6 +186,14 @@ export const NavigationItems: NavigationItem[] = [
         url: '/admin/pago-estudiantes',
         classes: 'nav-item',
         icon: 'feather icon-pie-chart'
+      },
+                  {
+        id: 'apexChart',
+        title: 'Pagos Dia',
+        type: 'item',
+        url: '/admin/cobros-dias',
+        classes: 'nav-item',
+        icon: 'feather icon-pie-chart'
       }/*,
        {
         id: 'apexChart',

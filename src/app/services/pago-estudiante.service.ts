@@ -102,6 +102,31 @@ export interface RegistrarPagoDTO {
   usuario_id?: number;
   tipo_pago: 'deuda_existente';
 }
+export interface CobroDelDia {
+  cobro_id: number;
+  concepto: string;
+  monto_total: string; 
+  monto_pagado: string;
+  saldo_pendiente: string;
+  fecha_vencimiento: string; 
+  estado_cobro_db: string;
+  tipo_cobro: string;
+  inscripcion_id: number;
+  estudiante_id: number;
+  nombre_estudiante: string;
+  ci: string;
+  telefono: string;
+  email: string;
+  curso: string;
+  modalidad: 'presencial' | 'virtual' | 'hibrido';
+  turno: string | null;
+  horario: string;
+  fecha_inicio: string;
+  fecha_fin_estimada: string | null;
+  monto_total_inscripcion: string;
+  monto_mensual: string;
+  estado_pago_calculado: 'Pago pendiente' | 'Pago vencido' | 'Pagado' | 'Pago no generado';
+}
 
 export interface ObtenerDeudasDTO {
   inscripcion_id: number;
@@ -150,5 +175,10 @@ export class PagoEstudianteService {
   // GET /api/pagos-estudiante/tipos-cobro
   getTiposCobro(): Observable<ApiResponse> {
     return this.http.get<ApiResponse>(`${this.baseUrl}/tipos-cobro`);
+  }
+
+  // GET /api/pagos-estudiante/cobros-del-dia
+  getCobrosDelDia(): Observable<ApiResponse> {
+    return this.http.get<ApiResponse>(`${this.baseUrl}/cobros-del-dia`);
   }
 }

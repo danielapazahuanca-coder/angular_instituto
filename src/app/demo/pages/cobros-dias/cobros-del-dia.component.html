@@ -1,0 +1,44 @@
+<div class="container">
+  <h2>Cobros del Día</h2>
+
+  <div *ngIf="loading">Cargando...</div>
+
+  <div *ngIf="!loading && cobros.length === 0">
+    No se encontraron cobros.
+  </div>
+
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+      <tr>
+        <th>Estudiante</th>
+        <th>Curso</th>
+        <th>Monto Mensual</th>
+        <th>Concepto</th>
+        <th>Fecha de Pago</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let cobro of cobros"> 
+        <td>{{ cobro.nombre_estudiante }}</td>
+        <td>{{ cobro.curso }}</td>
+        <td>{{ cobro.monto_mensual }}</td>
+        <td>{{ cobro.concepto }}</td>
+        <td>{{ cobro.fecha_vencimiento | date:'dd/MM/yyyy' }}</td>
+        <td>
+          <span [class]="getEstadoClass(cobro.estado_pago_calculado)">
+            {{ cobro.estado_pago_calculado }}
+          </span>
+        </td>
+      </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+</div>

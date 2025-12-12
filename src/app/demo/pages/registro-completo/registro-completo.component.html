@@ -188,6 +188,45 @@
               Debe seleccionar un curso
             </div>
           </div>
+
+          <!-- ✅ NUEVO: Selección de Horario -->
+  <div class="col-md-8" *ngIf="cursoSeleccionado">
+    <label class="form-label">Horario <span class="text-danger">*</span></label>
+    
+    <!-- Si hay horarios disponibles -->
+    <div *ngIf="horariosDisponibles.length > 0" class="horarios-container">
+      <div 
+        *ngFor="let horario of horariosDisponibles; trackBy: trackByHorario" 
+        class="horario-card"
+        [class.selected]="f['horario_id'].value === horario.id"
+      >
+        <input 
+          type="radio" 
+          [id]="'horario-' + horario.id"
+          [value]="horario.id"
+          formControlName="horario_id"
+          class="form-check-input me-2"
+        />
+        <label [for]="'horario-' + horario.id" class="horario-label">
+          <div class="horario-info">
+            <strong class="turno">{{ horario.turno }}</strong>
+            <span class="horario">{{ horario.hora_inicio }} - {{ horario.hora_fin }}</span>
+            <span class="dias">{{ horario.dias_semana }}</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Si NO hay horarios disponibles -->
+    <div *ngIf="horariosDisponibles.length === 0" class="alert alert-warning">
+      <i class="fa fa-exclamation-triangle"></i> 
+      No hay horarios disponibles para este curso
+    </div>
+
+    <div class="invalid-feedback d-block" *ngIf="f['horario_id'].touched && f['horario_id'].invalid">
+      Debe seleccionar un horario
+    </div>
+  </div>
           
           <div class="col-md-4">
             <label class="form-label">Fecha de Inicio <span class="text-danger">*</span></label>

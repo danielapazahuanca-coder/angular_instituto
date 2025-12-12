@@ -5,6 +5,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
+export interface Horario {
+  id: number;
+  turno: string;
+  hora_inicio: string;
+  hora_fin: string;
+  dias_semana: string;
+}
+
 export interface Curso {
   id: number;
   nombre: string;
@@ -13,6 +21,7 @@ export interface Curso {
   descripcion?: string;
   activo?: boolean;
   precio_mensual?: string;
+  horarios?: Horario[];
 }
 
 export interface RegistroCompletoDTO {
@@ -28,6 +37,7 @@ export interface RegistroCompletoDTO {
   observaciones_estudiante: string | null;
   
   curso_id: number;
+  horario_id: number; 
   fecha_inicio: string;
   fecha_fin_estimada: string;
   
@@ -59,6 +69,9 @@ export interface EstudianteInscrito {
   inscripcion_id: number;
   curso: string;
   curso_id: number;
+  horario_id?: number;
+  horario_turno?: string;
+  horario_dias?: string;
   fecha_inicio: string;
   fecha_fin_estimada: string;
   monto_total: number;
@@ -83,6 +96,11 @@ export class RegistroCompletoService {
   private apiUrl = `${environment.apiUrl}`; 
 
   constructor(private http: HttpClient) {}
+
+    
+  getCursosConHorarios(): Observable<ApiResponse<Curso[]>> {
+    return this.http.get<ApiResponse<Curso[]>>(`${this.apiUrl}/cursos-con-horarios`);
+  }
 
   getCursos(): Observable<ApiResponse<Curso[]>> {
     return this.http.get<ApiResponse<Curso[]>>(`${this.apiUrl}/cursos`);

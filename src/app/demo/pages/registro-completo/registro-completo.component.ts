@@ -8,7 +8,7 @@ import {
   RegistroCompletoService,
   Curso,
   RegistroCompletoDTO,
-  EstudianteInscrito
+  EstudianteInscrito,Horario
 } from '../../../services/registro-completo.service';
 
 @Component({
@@ -21,6 +21,7 @@ export class RegistroCompletoComponent implements OnInit {
   cursos: Curso[] = [];
   cargando = false;
   cursoSeleccionado: Curso | null = null;
+   horariosDisponibles: Horario[] = [];
   
   modo: 'lista' | 'registro' = 'lista';
   esEdicion = false;
@@ -63,6 +64,7 @@ export class RegistroCompletoComponent implements OnInit {
       observaciones_estudiante: [''],
       
       curso_id: [null, [Validators.required]],
+      horario_id: [null, [Validators.required]],
       fecha_inicio: ['', [Validators.required]],
       fecha_fin_estimada: [''],
       
@@ -81,19 +83,6 @@ export class RegistroCompletoComponent implements OnInit {
     });
   }
 
-  cargarEstudiantes(): void {
-    this.cargando = true;
-    this.registroService.getEstudiantesInscritos().subscribe({
-      next: (res) => {
-        this.cargando = false;
-        this.estudiantesInscritos = res.success && res.data ? res.data : [];
-      },
-      error: () => {
-        this.cargando = false;
-        alert('Error al cargar la lista de estudiantes');
-      }
-    });
-  }
 
   irANuevoRegistro(): void {
     this.esEdicion = false;
@@ -120,7 +109,7 @@ export class RegistroCompletoComponent implements OnInit {
     this.cargarDatosEstudiante(estudiante);
   }
 
-  cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
+cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
     const formatearFecha = (fecha: string | null): string => {
       if (!fecha) return '';
       const d = new Date(fecha);
@@ -128,7 +117,6 @@ export class RegistroCompletoComponent implements OnInit {
     };
 
     this.registroForm.patchValue({
-
       nombre: estudiante.nombre,
       apellido_paterno: estudiante.apellido_paterno,
       apellido_materno: estudiante.apellido_materno || '',
@@ -140,6 +128,7 @@ export class RegistroCompletoComponent implements OnInit {
       observaciones_estudiante: estudiante.observaciones_estudiante || '',
       
       curso_id: estudiante.curso_id,
+      horario_id: estudiante.horario_id || null, // ✅ NUEVO
       fecha_inicio: formatearFecha(estudiante.fecha_inicio),
       fecha_fin_estimada: formatearFecha(estudiante.fecha_fin_estimada),
       
@@ -158,9 +147,28 @@ export class RegistroCompletoComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.cargarCursosConHorarios();
     this.cargarCursos();
     this.configurarCalculosAutomaticos();
     this.cargarEstudiantes();
+  }
+   cargarCursosConHorarios(): void {
+    this.cargando = true;
+    this.registroService.getCursosConHorarios().subscribe({
+      next: (res) => {
+        this.cursos = res.success ? (res.data as Curso[]) : [];
+        this.cargando = false;
+        
+        if (this.cursos.length > 0) {
+          console.log('✅ Cursos con horarios cargados:', this.cursos);
+        }
+      },
+      error: (err) => {
+        this.cargando = false;
+        console.error('❌ Error al cargar cursos:', err);
+        alert('Error al cargar cursos con horarios');
+      }
+    });
   }
 
     cargarCursos(): void {
@@ -210,27 +218,38 @@ export class RegistroCompletoComponent implements OnInit {
     return est.estudiante_id;
   }
 
-    onCursoChange(cursoId: number): void {
-      if (!cursoId) {
-        this.cursoSeleccionado = null;
-        return;
-      }
-
-      this.cursoSeleccionado = this.cursos.find(c => c.id === cursoId) || null;
-      
-      if (this.cursoSeleccionado) { 
-        const precioMensual = parseFloat(this.cursoSeleccionado.precio_mensual) || 0;
-        const duracion = this.cursoSeleccionado.duracion_meses || 1;
-
-        this.registroForm.patchValue({
-          monto_mensual: precioMensual,
-          duracion_meses: duracion
-        });
-
-        this.calcularFechaFin();
-        this.calcularMontos();
-      }
+  onCursoChange(cursoId: number): void {
+    if (!cursoId) {
+      this.cursoSeleccionado = null;
+      this.horariosDisponibles = [];
+      this.registroForm.patchValue({ horario_id: null });
+      return;
     }
+
+    this.cursoSeleccionado = this.cursos.find(c => c.id === cursoId) || null;
+    
+    if (this.cursoSeleccionado) {
+      // ✅ Cargar horarios del curso seleccionado
+      this.horariosDisponibles = this.cursoSeleccionado.horarios || [];
+      
+      console.log('📅 Horarios disponibles:', this.horariosDisponibles);
+      
+      // Resetear selección de horario
+      this.registroForm.patchValue({ horario_id: null });
+      
+      // Autocompletar precios y duración
+      const precioMensual = parseFloat(this.cursoSeleccionado.precio_mensual) || 0;
+      const duracion = this.cursoSeleccionado.duracion_meses || 1;
+
+      this.registroForm.patchValue({
+        monto_mensual: precioMensual,
+        duracion_meses: duracion
+      });
+
+      this.calcularFechaFin();
+      this.calcularMontos();
+    }
+  }
 
   calcularFechaFin(): void {
     const fechaInicio = this.registroForm.get('fecha_inicio')?.value;
@@ -311,8 +330,7 @@ export class RegistroCompletoComponent implements OnInit {
         }
       }
 
-  registrarEstudiante(): void {
-
+registrarEstudiante(): void {
     this.cargando = true;
     const formValue = this.registroForm.value;
 
@@ -329,6 +347,7 @@ export class RegistroCompletoComponent implements OnInit {
       observaciones_estudiante: formValue.observaciones_estudiante || null,
       
       curso_id: parseInt(formValue.curso_id),
+      horario_id: parseInt(formValue.horario_id), // ✅ NUEVO
       fecha_inicio: formValue.fecha_inicio,
       fecha_fin_estimada: formValue.fecha_fin_estimada,
       
@@ -370,7 +389,8 @@ export class RegistroCompletoComponent implements OnInit {
     });
   }
 
-  actualizarEstudiante(): void {
+
+actualizarEstudiante(): void {
     if (!this.estudianteEditando) return;
 
     const formValue = this.registroForm.value;
@@ -387,6 +407,7 @@ export class RegistroCompletoComponent implements OnInit {
       observaciones_estudiante: formValue.observaciones_estudiante || null,
       
       curso_id: parseInt(formValue.curso_id),
+      horario_id: parseInt(formValue.horario_id), // ✅ NUEVO
       fecha_inicio: formValue.fecha_inicio,
       fecha_fin_estimada: formValue.fecha_fin_estimada,
       
@@ -399,8 +420,6 @@ export class RegistroCompletoComponent implements OnInit {
       observaciones_inscripcion: formValue.observaciones_inscripcion || null,
       usuario_registro_id: null
     };
-    
-    console.log('🔍 Datos de actualización:', datos);
     
     this.cargando = true;
     this.registroService.actualizarEstudiante(this.estudianteEditando.estudiante_id, datos).subscribe({
@@ -416,6 +435,20 @@ export class RegistroCompletoComponent implements OnInit {
       error: (err) => {
         this.cargando = false;
         alert('Error al actualizar: ' + (err.error?.message || 'Error desconocido'));
+      }
+    });
+  }
+
+  cargarEstudiantes(): void {
+    this.cargando = true;
+    this.registroService.getEstudiantesInscritos().subscribe({
+      next: (res) => {
+        this.cargando = false;
+        this.estudiantesInscritos = res.success && res.data ? res.data : [];
+      },
+      error: () => {
+        this.cargando = false;
+        alert('Error al cargar la lista de estudiantes');
       }
     });
   }

@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface HorarioDTO {
+  id?: number; 
   turno: string;
   hora_inicio: string;    
   hora_fin: string;       
@@ -45,6 +46,7 @@ export interface ActualizarCursoDTO {
   precio_mensual?: number;
   descripcion?: string;
   activo?: boolean;
+  horarios: HorarioDTO[];
 }
 
 export interface ApiResponse {

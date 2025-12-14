@@ -65,6 +65,7 @@ export class CursoComponent implements OnInit {
 
   crearHorarioFormGroup(): FormGroup {
     return this.fb.group({
+      id: [null],
       turno: ['', Validators.required],
       hora_inicio: ['', [Validators.required, this.validarHora]],
       hora_fin: ['', [Validators.required, this.validarHora]],
@@ -165,6 +166,7 @@ abrirModalEditar(cursoId: number): void {
         if (curso.horarios && curso.horarios.length > 0) {
           curso.horarios.forEach(h => {
             this.horarios.push(this.fb.group({
+              id: [h.id],
               turno: [h.turno, Validators.required],
               hora_inicio: [h.hora_inicio, [Validators.required, this.validarHora]],
               hora_fin: [h.hora_fin, [Validators.required, this.validarHora]],
@@ -232,7 +234,8 @@ enviarFormulario(): void {
       precio_total: formValue.precio_total,
       precio_mensual: formValue.precio_mensual,
       descripcion: formValue.descripcion || null,
-      activo: formValue.activo
+      activo: formValue.activo,
+      horarios: formValue.horarios
     };
 
     console.log(' Enviando datos de actualización:', datos);
@@ -243,7 +246,7 @@ enviarFormulario(): void {
        
         this.cerrarModal();
         this.cargarCursos();
-      },
+      },  
       error: (error) => {
         console.error(' Error al actualizar curso:', error);
         

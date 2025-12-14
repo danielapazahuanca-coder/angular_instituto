@@ -88,7 +88,7 @@ export class RegistroCompletoComponent implements OnInit {
     this.esEdicion = false;
     this.estudianteEditando = null;
     this.modo = 'registro';
-    this.cargarCursos(); 
+    //this.cargarCursos(); 
     this.limpiarFormulario(); 
   }
 
@@ -104,7 +104,7 @@ export class RegistroCompletoComponent implements OnInit {
     this.estudianteEditando = estudiante;
     this.modo = 'registro';
     
-    this.cargarCursos();
+   // this.cargarCursos();
 
     this.cargarDatosEstudiante(estudiante);
   }
@@ -142,25 +142,31 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
     });
 
     setTimeout(() => {
+      this.onCursoChange(estudiante.curso_id);
       this.calcularMontos();
     }, 100);
   }
 
   ngOnInit(): void {
     this.cargarCursosConHorarios();
-    this.cargarCursos();
+    //this.cargarCursos();
     this.configurarCalculosAutomaticos();
     this.cargarEstudiantes();
   }
-   cargarCursosConHorarios(): void {
+  cargarCursosConHorarios(): void {
     this.cargando = true;
     this.registroService.getCursosConHorarios().subscribe({
       next: (res) => {
         this.cursos = res.success ? (res.data as Curso[]) : [];
         this.cargando = false;
         
+        console.log('✅ Cursos con horarios cargados:', this.cursos);
+        
+        // ✅ Verificar que los horarios están presentes
         if (this.cursos.length > 0) {
-          console.log('✅ Cursos con horarios cargados:', this.cursos);
+          this.cursos.forEach(curso => {
+            console.log(`Curso: ${curso.nombre}, Horarios:`, curso.horarios);
+          });
         }
       },
       error: (err) => {
@@ -171,23 +177,6 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
     });
   }
 
-    cargarCursos(): void {
-      this.cargando = true;
-      this.registroService.getCursos().subscribe({
-        next: (res) => {
-          this.cursos = res.success ? (res.data as Curso[]) : [];
-          this.cargando = false;
-          
-          if (this.cursos.length > 0) {
-            console.log('Estructura de un curso:', this.cursos[0]);
-          }
-        },
-        error: () => {
-          this.cargando = false;
-          alert('Error al cargar cursos');
-        }
-      });
-    }
 
   irAlFormulario(): void {
     this.mostrarFormulario = true;
@@ -213,12 +202,17 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       this.onRealizaPagoChange(realiza);
     });
   }
+    trackByHorario(index: number, horario: Horario): number {
+    return horario.id;
+  }
 
   trackByEstudiante(index: number, est: EstudianteInscrito): number {
     return est.estudiante_id;
   }
 
   onCursoChange(cursoId: number): void {
+    console.log('🔍 Curso seleccionado ID:', cursoId);
+    
     if (!cursoId) {
       this.cursoSeleccionado = null;
       this.horariosDisponibles = [];
@@ -233,12 +227,15 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       this.horariosDisponibles = this.cursoSeleccionado.horarios || [];
       
       console.log('📅 Horarios disponibles:', this.horariosDisponibles);
+      console.log('📅 Cantidad de horarios:', this.horariosDisponibles.length);
       
-      // Resetear selección de horario
-      this.registroForm.patchValue({ horario_id: null });
+      // Resetear selección de horario solo si no estamos en edición
+      if (!this.esEdicion) {
+        this.registroForm.patchValue({ horario_id: null });
+      }
       
       // Autocompletar precios y duración
-      const precioMensual = parseFloat(this.cursoSeleccionado.precio_mensual) || 0;
+      const precioMensual = parseFloat(this.cursoSeleccionado.precio_mensual || '0') || 0;
       const duracion = this.cursoSeleccionado.duracion_meses || 1;
 
       this.registroForm.patchValue({
@@ -248,8 +245,16 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
 
       this.calcularFechaFin();
       this.calcularMontos();
+    } else {
+      console.warn('⚠️ No se encontró el curso seleccionado');
+      this.horariosDisponibles = [];
     }
   }
+
+  // Método para seleccionar horario al hacer clic en la tarjeta
+seleccionarHorario(horarioId: number): void {
+  this.registroForm.get('horario_id')?.setValue(horarioId);
+}
 
   calcularFechaFin(): void {
     const fechaInicio = this.registroForm.get('fecha_inicio')?.value;

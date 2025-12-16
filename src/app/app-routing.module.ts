@@ -97,6 +97,10 @@ const routes: Routes = [
         loadComponent: () => import('./demo/pages/cobros-dias/cobros-del-dia.component').then((c) => c.CobrosDelDiaComponent)
       },
       {
+      path: 'reporte-financiero',
+        loadComponent: () => import('./demo/pages/reporte-financiero/reporte-financiero.component').then((c) => c.ReporteFinancieroComponent)
+      },
+      {
         path: 'apexchart',
         loadComponent: () => import('./demo/pages/core-chart/apex-chart/apex-chart.component').then((c) => c.ApexChartComponent)
       },

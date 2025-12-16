@@ -7,38 +7,153 @@
     No se encontraron cobros.
   </div>
 
-<div class="row">
-  <div class="col-xl-12">
-    <app-card [options]="false" blockClass="table-border-style">
-      <div class="table-responsive">
-        <table class="table table-hover">
-          <thead>
-      <tr>
-        <th>Estudiante</th>
-        <th>Curso</th>
-        <th>Monto Mensual</th>
-        <th>Concepto</th>
-        <th>Fecha de Pago</th>
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let cobro of cobros"> 
-        <td>{{ cobro.nombre_estudiante }}</td>
-        <td>{{ cobro.curso }}</td>
-        <td>{{ cobro.monto_mensual }}</td>
-        <td>{{ cobro.concepto }}</td>
-        <td>{{ cobro.fecha_vencimiento | date:'dd/MM/yyyy' }}</td>
-        <td>
-          <span [class]="getEstadoClass(cobro.estado_pago_calculado)">
-            {{ cobro.estado_pago_calculado }}
-          </span>
-        </td>
-      </tr>
-          </tbody>
-        </table>
-      </div>
-    </app-card>
+  <div class="row">
+    <div class="col-xl-12">
+      <app-card [options]="false" blockClass="table-border-style">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Estudiante</th>
+                <th>Curso</th>
+                <th>Monto Mensual</th>
+                <th>Concepto</th>
+                <th>Fecha de Pago</th>
+                <th>Saldo Pendiente</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let cobro of cobros">
+                <td>{{ cobro.nombre_estudiante }}</td>
+                <td>{{ cobro.curso }}</td>
+                <td>{{ cobro.monto_mensual | currency }}</td>
+                <td>{{ cobro.concepto }}</td>
+                <td>{{ cobro.fecha_vencimiento | date:'dd/MM/yyyy' }}</td>
+                <td class="text-danger fw-bold">{{ cobro.saldo_pendiente | currency }}</td>
+                <td>
+                  <span [class]="getEstadoClass(cobro.estado_pago_calculado)">
+                    {{ cobro.estado_pago_calculado }}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    *ngIf="cobro.estado_pago_calculado !== 'Pagado'"
+                    class="btn btn-success btn-sm"
+                    (click)="abrirModalPago(cobro)"
+                  >
+                    Cobrar
+                  </button>
+                  <span *ngIf="cobro.estado_pago_calculado === 'Pagado'" class="badge bg-success">
+                    Pagado
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </app-card>
+    </div>
   </div>
 </div>
+
+<!-- Modal de Pago -->
+<div 
+  class="modal fade show" 
+  *ngIf="modalPagoVisible" 
+  style="display: block; background: rgba(0,0,0,0.5);" 
+  tabindex="-1"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Registrar Pago</h5>
+        <button type="button" class="btn-close" (click)="cerrarModalPago()"></button>
+      </div>
+      
+      <form [formGroup]="pagoForm" (ngSubmit)="registrarPago()">
+        <div class="modal-body">
+          <!-- Información del cobro -->
+          <div class="alert alert-info" *ngIf="cobroSeleccionado">
+            <strong>Estudiante:</strong> {{ cobroSeleccionado.nombre_estudiante }}<br>
+            <strong>Curso:</strong> {{ cobroSeleccionado.curso }}<br>
+            <strong>Concepto:</strong> {{ cobroSeleccionado.concepto }}<br>
+            <strong>Saldo Pendiente:</strong> {{ cobroSeleccionado.saldo_pendiente | currency }}
+          </div>
+
+          <!-- Formulario de pago -->
+          <div class="mb-3">
+            <label class="form-label">Monto *</label>
+            <input 
+              type="number" 
+              class="form-control" 
+              formControlName="monto" 
+              step="0.01"
+              min="0.01"
+            />
+            <div *ngIf="p['monto'].touched && p['monto'].invalid" class="text-danger mt-1">
+              Monto requerido y debe ser mayor a 0.
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Método de Pago *</label>
+            <select class="form-control" formControlName="metodo_pago">
+              <option *ngFor="let m of metodosPago" [value]="m.value">
+                {{ m.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">N° Recibo (opcional)</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              formControlName="numero_recibo"
+              placeholder="Ingrese número de recibo"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Fecha y Hora *</label>
+            <input 
+              type="datetime-local" 
+              class="form-control" 
+              formControlName="fecha_pago"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Observaciones</label>
+            <textarea 
+              class="form-control" 
+              formControlName="observaciones"
+              rows="3"
+              placeholder="Observaciones adicionales..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="cerrarModalPago()"
+            [disabled]="registrandoPago"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            [disabled]="registrandoPago || pagoForm.invalid"
+          >
+            {{ registrandoPago ? 'Registrando...' : 'Registrar Pago' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

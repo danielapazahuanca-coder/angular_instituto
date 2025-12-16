@@ -194,7 +194,16 @@ export const NavigationItems: NavigationItem[] = [
         url: '/admin/cobros-dias',
         classes: 'nav-item',
         icon: 'feather icon-pie-chart'
-      }/*,
+      },
+      {
+      id: 'apexChart',
+        title: 'Reporte',
+        type: 'item',
+        url: '/admin/reporte-financiero',
+        classes: 'nav-item',
+        icon: 'feather icon-pie-chart'
+      }
+      /*,
        {
         id: 'apexChart',
         title: 'Egresos',

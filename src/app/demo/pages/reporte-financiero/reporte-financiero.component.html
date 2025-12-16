@@ -1,0 +1,102 @@
+<!-- Filtros -->
+<div class="row mb-4">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="card-header">
+        <h5 class="mb-0">Filtros del Reporte</h5>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="formulario" (ngSubmit)="generarReporte()">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Fecha Inicio *</label>
+              <input
+                formControlName="fecha_inicio"
+                type="date"
+                class="form-control"
+                [class.is-invalid]="f['fecha_inicio'].touched && f['fecha_inicio'].invalid"
+              />
+              <div class="invalid-feedback" *ngIf="f['fecha_inicio'].touched && f['fecha_inicio'].invalid">
+                Fecha de inicio requerida
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Fecha Fin *</label>
+              <input
+                formControlName="fecha_fin"
+                type="date"
+                class="form-control"
+                [class.is-invalid]="f['fecha_fin'].touched && f['fecha_fin'].invalid"
+              />
+              <div class="invalid-feedback" *ngIf="f['fecha_fin'].touched && f['fecha_fin'].invalid">
+                Fecha de fin requerida
+              </div>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary w-100" [disabled]="cargando">
+                <i class="fa fa-search me-1"></i>
+                {{ cargando ? 'Generando...' : 'Generar Reporte' }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- Resultados -->
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Resultados del Reporte Financiero</h5>
+        <span *ngIf="reporte.length > 0" class="badge bg-success">
+          Total: {{ totalIngresos() | number:'1.2-2' }} Bs
+        </span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Estudiante</th>
+              <th>Curso</th>
+              <th>Concepto</th>
+              <th>Monto</th>
+              <th>Método</th>
+              <th>Estado</th>
+              <th>Fecha Pago</th>
+              <th>Recibo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of reporte">
+              <td>{{ item.estudiante_nombre }} {{ item.estudiante_apellido }}</td>
+              <td>{{ item.curso_nombre }}</td>
+              <td>{{ item.concepto }}</td>
+              <td class="text-end">{{ (+item.monto_pago).toFixed(2) }}</td>
+              <td>{{ metodoPagoLabel(item.metodo_pago) }}</td>
+              <td>
+                <span
+                  [class.text-success]="item.estado_cobro === 'pagado'"
+                  [class.text-warning]="item.estado_cobro === 'parcial'"
+                  [class.text-danger]="item.estado_cobro === 'vencido' || item.estado_cobro === 'pendiente'"
+                >
+                  {{ estadoCobroLabel(item.estado_cobro) }}
+                </span>
+              </td>
+              <td>{{ item.fecha_pago | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ item.numero_recibo || '—' }}</td>
+            </tr>
+            <tr *ngIf="reporte.length === 0 && !cargando">
+              <td colspan="8" class="text-center">No se encontraron pagos en el rango seleccionado.</td>
+            </tr>
+            <tr *ngIf="cargando">
+              <td colspan="8" class="text-center">Generando reporte...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>

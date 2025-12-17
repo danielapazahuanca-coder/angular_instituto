@@ -31,6 +31,9 @@ export interface FiltrosReporteFinanciero {
   fecha_inicio: string;
   fecha_fin: string;    
 }
+export interface PdfResponse {
+  pdf: string; 
+}
 
 @Injectable({
   providedIn: 'root'
@@ -46,5 +49,16 @@ export class ReporteService {
       .set('fecha_fin', filtros.fecha_fin);
 
     return this.http.get<ApiResponse>(this.apiUrl, { params });
+  }
+
+    generarPdfFinanciero(filtros: FiltrosReporteFinanciero): Observable<ApiResponse & { data: { pdf: string } }> {
+    let params = new HttpParams()
+      .set('fecha_inicio', filtros.fecha_inicio)
+      .set('fecha_fin', filtros.fecha_fin);
+
+    return this.http.get<ApiResponse & { data: { pdf: string } }>(
+      `${this.apiUrl}/financiero-pdf`,
+      { params }
+    );
   }
 }

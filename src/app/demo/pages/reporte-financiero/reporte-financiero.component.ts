@@ -31,7 +31,7 @@ export class ReporteFinancieroComponent {
   }
 
   private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+    return date.toISOString().split('T')[0]; 
   }
 
   generarReporte(): void {
@@ -98,4 +98,48 @@ export class ReporteFinancieroComponent {
     };
     return map[estado] || estado;
   }
+
+  descargarPdf(): void {
+  if (this.formulario.invalid) {
+    this.formulario.markAllAsTouched();
+    return;
+  }
+
+  const filtros = this.formulario.value;
+  if (filtros.fecha_inicio > filtros.fecha_fin) {
+    alert('Rango de fechas inválido');
+    return;
+  }
+
+  this.cargando = true;
+  this.reporteService.generarPdfFinanciero(filtros).subscribe({
+    next: (res) => {
+      console.log('Respuesta',res);
+      if (res.success && res.data?.pdf) {
+        const base64 = res.data.pdf;
+        console.log('Respuesta',base64);
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = `reporte-financiero-${filtros.fecha_inicio}-a-${filtros.fecha_fin}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(link.href);
+      } else {
+        alert('No se pudo generar el PDF.');
+      }
+      this.cargando = false;
+    },
+    error: () => {
+      this.cargando = false;
+      alert('Error al generar el PDF.');
+    }
+  });
+}
 }

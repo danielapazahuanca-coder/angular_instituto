@@ -37,7 +37,11 @@
                 <i class="fa fa-search me-1"></i>
                 {{ cargando ? 'Generando...' : 'Generar Reporte' }}
               </button>
+                    <button type="button" class="btn btn-danger w-100" (click)="descargarPdf()" [disabled]="cargando">
+              <i class="fa fa-file-pdf me-1"></i> Exportar PDF
+            </button>
             </div>
+            
           </div>
         </form>
       </div>

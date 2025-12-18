@@ -1,5 +1,3 @@
-// reporte.service.ts
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -31,15 +29,12 @@ export interface FiltrosReporteFinanciero {
   fecha_inicio: string;
   fecha_fin: string;    
 }
-export interface PdfResponse {
-  pdf: string; 
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReporteService {
-  private apiUrl = `${environment.apiUrl}/reportes/financiero`;
+  private baseUrl = `${environment.apiUrl}/reportes`;
 
   constructor(private http: HttpClient) {}
 
@@ -48,16 +43,16 @@ export class ReporteService {
       .set('fecha_inicio', filtros.fecha_inicio)
       .set('fecha_fin', filtros.fecha_fin);
 
-    return this.http.get<ApiResponse>(this.apiUrl, { params });
+    return this.http.get<ApiResponse>(`${this.baseUrl}/financiero`, { params });
   }
 
-    generarPdfFinanciero(filtros: FiltrosReporteFinanciero): Observable<ApiResponse & { data: { pdf: string } }> {
+  generarPdfFinanciero(filtros: FiltrosReporteFinanciero): Observable<ApiResponse & { data: { pdf: string } }> {
     let params = new HttpParams()
       .set('fecha_inicio', filtros.fecha_inicio)
       .set('fecha_fin', filtros.fecha_fin);
 
     return this.http.get<ApiResponse & { data: { pdf: string } }>(
-      `${this.apiUrl}/financiero-pdf`,
+      `${this.baseUrl}/financiero-pdf`,
       { params }
     );
   }

@@ -11,6 +11,7 @@ export interface NavigationItem {
   external?: boolean;
   target?: boolean;
   breadcrumbs?: boolean;
+  roles?: string[]; 
 
   children?: NavigationItem[];
 }
@@ -20,6 +21,7 @@ export const NavigationItems: NavigationItem[] = [
     title: 'Navegación',
     type: 'group',
     icon: 'icon-navigation',
+    roles: ['admin', 'secretaria'],
     children: [
       {
         id: 'dashboard',
@@ -36,12 +38,14 @@ export const NavigationItems: NavigationItem[] = [
     title: 'Usuarios',
     type: 'group',
     icon: 'icon-ui',
+    roles: ['admin'] ,
     children: [
-      {
+      /*{
         id: 'basic',
         title: 'Component',
         type: 'collapse',
         icon: 'feather icon-box',
+        roles: ['admin'],
         children: [
           {
             id: 'button',
@@ -80,14 +84,15 @@ export const NavigationItems: NavigationItem[] = [
             url: '/admin/basic/typography'
           }
         ]
-      },
+      },*/
        {
         id: 'tables',
         title: 'Usuario',
         type: 'item',
         url: '/admin/usuarios',
         classes: 'nav-item',
-        icon: 'feather icon-file-text'
+        icon: 'feather icon-file-text',
+        roles: ['admin'],
       }
     ]
   },
@@ -163,14 +168,14 @@ export const NavigationItems: NavigationItem[] = [
     type: 'group',
     icon: 'icon-charts',
     children: [
-      {
+      /*{
         id: 'apexChart',
         title: 'ApexChart',
         type: 'item',
         url: '/admin/apexchart',
         classes: 'nav-item',
         icon: 'feather icon-pie-chart'
-      },
+      },*/
       {
         id: 'apexChart',
         title: 'Ingresos - Egresos',
@@ -213,7 +218,7 @@ export const NavigationItems: NavigationItem[] = [
         icon: 'feather icon-pie-chart'
       }*/
     ]
-  },
+  }/*,
   {
     id: 'pages',
     title: 'Pages',
@@ -272,5 +277,5 @@ export const NavigationItems: NavigationItem[] = [
         external: true
       }
     ]
-  }
+  }*/
 ];

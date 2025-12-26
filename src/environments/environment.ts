@@ -7,8 +7,8 @@ import packageInfo from '../../package.json';
 export const environment = {
   appVersion: packageInfo.version,
   production: true,
-  apiUrl: 'https://ceetii.com/ibct/api_ibct/api'
-  //apiUrl: 'http://localhost:84/api_ibct/api'
+  apiUrl: 'https://ceetii.com/api_ibct/api'
+ // apiUrl: 'http://localhost:84/api_ibct/api'
 };
 /*
  * For easier debugging in development mode, you can import the following file

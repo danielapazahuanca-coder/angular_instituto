@@ -1,5 +1,7 @@
+<!-- src/app/demo/dashboard/dashboard.component.html -->
+
 <div class="row">
-  @for (sale of sales; track sale) {
+  @for (sale of sales; track $index) {
     <div class="{{ sale.design }} col-xl-4">
       <app-card [hidHeader]="true">
         <h6 class="mb-4">{{ sale.title }}</h6>
@@ -15,73 +17,13 @@
           </div>
         </div>
         <div class="m-t-30">
-          <ngb-progressbar type="progress-bar {{ sale.progress_bg }}" height="7px" [value]="sale.progress"></ngb-progressbar>
+          <ngb-progressbar 
+            type="progress-bar {{ sale.progress_bg }}" 
+            height="7px" 
+            [value]="sale.progress">
+          </ngb-progressbar>
         </div>
       </app-card>
     </div>
   }
-
-  <div class="col-xl-4 col-md-6">
-    <app-card cardTitle="Rating">
-      <div class="row align-items-center justify-content-center m-b-20">
-        <div class="col-6">
-          <h2 class="f-w-300 d-flex align-items-center float-start m-0">
-            4.7
-            <i class="fas fa-star f-10 m-l-10 text-c-yellow"></i>
-          </h2>
-        </div>
-        <div class="col-6">
-          <h6 class="d-flex align-items-center float-end m-0">
-            0.4
-            <i class="fas fa-caret-up text-c-green f-22 m-l-10"></i>
-          </h6>
-        </div>
-      </div>
-      <div class="row">
-        @for (list of progressing; track list; let last = $last) {
-          <div class="col-xl-12">
-            <h6 class="align-items-center float-start">
-              <i class="fas fa-star f-10 m-r-10 text-c-yellow"></i>
-              {{ list.number }}
-            </h6>
-            <h6 class="align-items-center float-end">{{ list.amount }}</h6>
-            <div class="m-t-30" [ngClass]="{ 'm-b-20': !last }">
-              <ngb-progressbar type="progress-bar {{ list.progress_bg }}" height="6px" [value]="list.progress"></ngb-progressbar>
-            </div>
-          </div>
-        }
-      </div>
-    </app-card>
-  </div>
-  <div class="col-xl-8 col-md-6">
-    <app-card cardTitle="Recent Users" cardClass="Recent-Users table-card" blockClass="p-0">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <tbody>
-            @for (table of tables; track table) {
-              <tr class="unread">
-                <td>
-                  <img class="rounded-circle" style="width: 40px" src="{{ table.src }}" alt="activity-user" />
-                </td>
-                <td>
-                  <h6 class="mb-1">{{ table.title }}</h6>
-                  <p class="m-0">{{ table.text }}</p>
-                </td>
-                <td>
-                  <h6 class="text-muted">
-                    <i class="fas fa-circle {{ table.color }} f-10 m-r-15"></i>
-                    {{ table.time }}
-                  </h6>
-                </td>
-                <td>
-                  <a href="javascript:" class="badge me-2 theme-bg2 text-white f-12">Reject</a>
-                  <a href="javascript:" class="badge me-2 theme-bg text-white f-12">Approve</a>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </app-card>
-  </div>
 </div>

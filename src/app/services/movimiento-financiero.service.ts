@@ -68,6 +68,17 @@ export interface TiposMovimientoResponse {
   message: string;
   data: TipoMovimientoDTO[] | null;
 }
+export interface TotalesFinancieros {
+  total_ingresos: number;
+  total_egresos: number;
+  ganancia_neta: number;
+}
+
+export interface TotalesResponse {
+  success: boolean;
+  message: string;
+  data: TotalesFinancieros;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -97,8 +108,12 @@ export class MovimientoFinancieroService {
     return this.http.delete<ApiResponse>(`${this.apiUrl}/${id}`);
   }
 
-getTiposMovimiento(): Observable<TiposMovimientoResponse> {
-  // Usa la URL raíz, no dentro de /movimientos
-  return this.http.get<TiposMovimientoResponse>(`${environment.apiUrl}/tipos-movimiento`);
-}
+    getTiposMovimiento(): Observable<TiposMovimientoResponse> {
+     
+      return this.http.get<TiposMovimientoResponse>(`${environment.apiUrl}/tipos-movimiento`);
+    }
+
+    getTotales(): Observable<TotalesResponse> {
+      return this.http.get<TotalesResponse>(`${environment.apiUrl}/movimientos-totales`);
+    }
 }

@@ -70,8 +70,10 @@ export interface EstudianteInscrito {
   curso: string;
   curso_id: number;
   horario_id?: number;
-  horario_turno?: string;
-  horario_dias?: string;
+  turno?: string;           // Cambiado de horario_turno a turno
+  hora_inicio?: string;     // Nuevo campo
+  hora_fin?: string;        // Nuevo campo
+  dias_semana?: string; 
   fecha_inicio: string;
   fecha_fin_estimada: string;
   monto_total: number;
@@ -81,6 +83,7 @@ export interface EstudianteInscrito {
   descuento?: number;
   tipo_pago?: string;
   observaciones_inscripcion?: string | null;
+  
 }
 
 export interface ApiResponse<T> {

@@ -77,7 +77,7 @@ export class CardComponent implements OnInit {
     this.customHeader = false;
     this.options = true;
     this.hidHeader = false;
-    this.cardTitle = 'Card Title';
+    this.cardTitle = 'Contenido';
     this.fullIcon = 'icon-maximize';
     this.isAnimating = false;
 

@@ -3,6 +3,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, FormGroup, Validators } from '@angular/forms';
 import { SharedModule } from 'src/app/theme/shared/shared.module';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
+
 import {
   PagoEstudianteService,
   EstudianteSearchResult,
@@ -52,7 +54,36 @@ export class PagoEstudianteComponent implements OnInit {
     private pagoService: PagoEstudianteService
   ) {}
 
-  ngOnInit(): void {}
+ ngOnInit(): void {
+  this.buscarForm.get('query')!
+    .valueChanges
+    .pipe(
+      debounceTime(400),          // espera 400ms
+      distinctUntilChanged(),     // evita búsquedas repetidas
+      filter((q: string) => q && q.trim().length >= 2)
+    )
+    .subscribe(query => {
+      this.buscarEstudiantesAuto(query);
+    });
+}
+buscarEstudiantesAuto(query: string): void {
+  this.buscando = true;
+  this.estudianteSeleccionado = null;
+  this.deudas = [];
+
+  this.pagoService.buscarEstudiantes({ query: query.trim() }).subscribe({
+    next: (res) => {
+      this.buscando = false;
+      this.estudiantes = res.success ? (res.data?.estudiantes || []) : [];
+    },
+    error: () => {
+      this.buscando = false;
+      this.estudiantes = [];
+    }
+  });
+}
+
+
 
   fechaHoy(): string {
     const now = new Date();

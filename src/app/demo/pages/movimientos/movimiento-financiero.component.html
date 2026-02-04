@@ -1,3 +1,49 @@
+<!-- Filtros de búsqueda -->
+<div class="row mb-3">
+  <div class="col-xl-12">
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">Filtros de Búsqueda</h6>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="filtrosForm">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Tipo de Movimiento</label>
+              <select class="form-select" formControlName="tipo_movimiento">
+                <option value="">Todos</option>
+                <option value="ingreso">Ingreso</option>
+                <option value="egreso">Egreso</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Fecha</label>
+              <input 
+                type="date" 
+                class="form-control" 
+                formControlName="fecha_movimiento"
+                placeholder="Seleccionar fecha"
+              />
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button 
+                type="button" 
+                class="btn btn-secondary me-2"
+                (click)="limpiarFiltros()"
+              >
+                <i class="fa fa-times"></i> Limpiar
+              </button>
+              <span class="text-muted">
+                {{ movimientosFiltrados.length }} de {{ movimientos.length }} registros
+              </span>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Botón principal -->
 <div class="row mb-3">
   <div class="col-xl-12 d-flex justify-content-between align-items-center">
@@ -27,7 +73,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let m of movimientos; let i = index">
+            <tr *ngFor="let m of movimientosFiltrados; let i = index">
               <th scope="row">{{ i + 1 }}</th>
               <td>
                 <span [class]="tipoMovimientoClass(m.tipo_movimiento)">
@@ -52,8 +98,8 @@
                 </button>
               </td>
             </tr>
-            <tr *ngIf="movimientos.length === 0 && !cargando">
-              <td colspan="8" class="text-center">No hay movimientos registrados.</td>
+            <tr *ngIf="movimientosFiltrados.length === 0 && !cargando">
+              <td colspan="8" class="text-center">No hay movimientos que coincidan con los filtros.</td>
             </tr>
             <tr *ngIf="cargando">
               <td colspan="8" class="text-center">Cargando...</td>

@@ -22,13 +22,18 @@ import {
 export class CobrosDelDiaComponent implements OnInit {
   cobrosData: any = null;
   cobros: CobroDelDia[] = [];
+   cobrosFiltrados: CobroDelDia[] = [];
   loading = false;
   total = 0;
   
-  // Variables para el modal de pago
   modalPagoVisible = false;
   registrandoPago = false;
   cobroSeleccionado: CobroDelDia | null = null;
+
+    filtrosForm: FormGroup = this.fb.group({
+    curso: [''],
+    estudiante: ['']
+  });
 
   pagoForm: FormGroup = this.fb.group({
     cobro_id: [null, Validators.required],
@@ -47,6 +52,9 @@ export class CobrosDelDiaComponent implements OnInit {
     { value: 'tarjeta', label: 'Tarjeta' }
   ];
 
+    cursosUnicos: string[] = [];
+  estudiantesUnicos: string[] = [];
+
   constructor(
     private pagoService: PagoEstudianteService,
     private fb: FormBuilder
@@ -54,6 +62,10 @@ export class CobrosDelDiaComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCobrosDelDia();
+
+        this.filtrosForm.valueChanges.subscribe(() => {
+      this.aplicarFiltros();
+    });
   }
 
   fechaHoy(): string {
@@ -67,6 +79,12 @@ export class CobrosDelDiaComponent implements OnInit {
       next: (response) => {
         console.log('🔍 Respuesta completa del servicio:', response);
         this.cobros = response.data?.cobros || [];
+        
+        // Extraer cursos y estudiantes únicos para los filtros
+        this.cursosUnicos = [...new Set(this.cobros.map(c => c.curso).filter(Boolean))];
+        this.estudiantesUnicos = [...new Set(this.cobros.map(c => c.nombre_estudiante).filter(Boolean))];
+        
+        this.cobrosFiltrados = [...this.cobros];
         this.total = response.data?.total || 0;
         
         // DEBUG: Ver los estados de cada cobro
@@ -84,6 +102,35 @@ export class CobrosDelDiaComponent implements OnInit {
         alert('Error en la llamada. Revisa la consola.');
       }
     });
+  }
+
+  aplicarFiltros(): void {
+    const { curso, estudiante } = this.filtrosForm.value;
+    
+    this.cobrosFiltrados = this.cobros.filter(cobro => {
+      let cumpleCurso = true;
+      let cumpleEstudiante = true;
+
+      // Filtro por curso (búsqueda parcial e insensible a mayúsculas)
+      if (curso && curso.trim() !== '') {
+        cumpleCurso = cobro.curso?.toLowerCase().includes(curso.toLowerCase().trim());
+      }
+
+      // Filtro por estudiante (búsqueda parcial e insensible a mayúsculas)
+      if (estudiante && estudiante.trim() !== '') {
+        cumpleEstudiante = cobro.nombre_estudiante?.toLowerCase().includes(estudiante.toLowerCase().trim());
+      }
+
+      return cumpleCurso && cumpleEstudiante;
+    });
+  }
+
+  limpiarFiltros(): void {
+    this.filtrosForm.reset({
+      curso: '',
+      estudiante: ''
+    });
+    this.cobrosFiltrados = [...this.cobros];
   }
 
   getEstadoClass(estado: string): string {

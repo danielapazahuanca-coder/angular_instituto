@@ -24,6 +24,12 @@ export class MovimientoFinancieroComponent implements OnInit {
   modalVisible = false;
   editando = false;
   movimientoActual: MovimientoFinanciero | null = null;
+  movimientosFiltrados: MovimientoFinanciero[] = [];
+
+    filtrosForm: FormGroup = this.fb.group({
+    tipo_movimiento: [''],
+    fecha_movimiento: ['']
+  });
 
   movimientoForm: FormGroup = this.fb.group({
     id: [null],
@@ -55,6 +61,10 @@ export class MovimientoFinancieroComponent implements OnInit {
   ngOnInit(): void {
     this.cargarTiposMovimiento();
     this.cargarMovimientos();
+
+        this.filtrosForm.valueChanges.subscribe(() => {
+      this.aplicarFiltros();
+    });
     console.log('datos',this.cargarTiposMovimiento);
   }
 
@@ -80,12 +90,43 @@ export class MovimientoFinancieroComponent implements OnInit {
     this.movimientoService.getMovimientos().subscribe({
       next: (res) => {
         this.movimientos = res.success ? (res.data as MovimientoFinanciero[]) : [];
+        this.movimientosFiltrados = [...this.movimientos];
         this.cargando = false;
       },
       error: () => {
         this.cargando = false;
       }
     });
+  }
+
+   aplicarFiltros(): void {
+    const { tipo_movimiento, fecha_movimiento } = this.filtrosForm.value;
+    
+    this.movimientosFiltrados = this.movimientos.filter(movimiento => {
+      let cumpleTipo = true;
+      let cumpleFecha = true;
+
+      // Filtro por tipo de movimiento
+      if (tipo_movimiento && tipo_movimiento !== '') {
+        cumpleTipo = movimiento.tipo_movimiento === tipo_movimiento;
+      }
+
+      // Filtro por fecha
+      if (fecha_movimiento && fecha_movimiento !== '') {
+        // Comparar solo la fecha (sin hora)
+        const fechaMovimiento = new Date(movimiento.fecha_movimiento).toISOString().split('T')[0];
+        cumpleFecha = fechaMovimiento === fecha_movimiento;
+      }
+
+      return cumpleTipo && cumpleFecha;
+    });
+  }
+    limpiarFiltros(): void {
+    this.filtrosForm.reset({
+      tipo_movimiento: '',
+      fecha_movimiento: ''
+    });
+    this.movimientosFiltrados = [...this.movimientos];
   }
 
   abrirModalCrear(): void {

@@ -1,15 +1,85 @@
 <div class="container">
   <h2>Cobros del Día</h2>
 
-  <div *ngIf="loading">Cargando...</div>
+  <!-- Filtros de búsqueda -->
+  <div class="row mb-3">
+    <div class="col-xl-12">
+      <app-card [options]="false" blockClass="table-border-style">
+        <div class="card-header">
+          <h6 class="mb-0">Filtros de Búsqueda</h6>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="filtrosForm">
+            <div class="row g-3">
+              <div class="col-md-5">
+                <label class="form-label">Curso</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  formControlName="curso"
+                  placeholder="Buscar curso..."
+                  [attr.list]="'cursos-list'"
+                />
+                <datalist id="cursos-list">
+                  <option *ngFor="let curso of cursosUnicos" [value]="curso"></option>
+                </datalist>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label">Estudiante</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  formControlName="estudiante"
+                  placeholder="Buscar estudiante..."
+                  [attr.list]="'estudiantes-list'"
+                />
+                <datalist id="estudiantes-list">
+                  <option *ngFor="let estudiante of estudiantesUnicos" [value]="estudiante"></option>
+                </datalist>
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button 
+                  type="button" 
+                  class="btn btn-secondary w-100"
+                  (click)="limpiarFiltros()"
+                >
+                  <i class="fa fa-times"></i> Limpiar
+                </button>
+              </div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-12">
+                <small class="text-muted">
+                  {{ cobrosFiltrados.length }} de {{ cobros.length }} registros encontrados
+                </small>
+              </div>
+            </div>
+          </form>
+        </div>
+      </app-card>
+    </div>
+  </div>
 
-  <div *ngIf="!loading && cobros.length === 0">
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2">Cargando cobros del día...</p>
+  </div>
+
+  <div *ngIf="!loading && cobros.length === 0" class="alert alert-info">
     No se encontraron cobros.
   </div>
 
-  <div class="row">
+  <div class="row" *ngIf="!loading && cobros.length > 0">
     <div class="col-xl-12">
       <app-card [options]="false" blockClass="table-border-style">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">Lista de Cobros</h6>
+          <span class="badge bg-primary">
+            Total: {{ total | currency }}
+          </span>
+        </div>
         <div class="table-responsive">
           <table class="table table-hover">
             <thead>
@@ -25,13 +95,26 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let cobro of cobros">
-                <td>{{ cobro.nombre_estudiante }}</td>
-                <td>{{ cobro.curso }}</td>
-                <td>{{ cobro.monto_mensual | currency }}</td>
-                <td>{{ cobro.concepto }}</td>
-                <td>{{ cobro.fecha_vencimiento | date:'dd/MM/yyyy' }}</td>
-                <td class="text-danger fw-bold">{{ cobro.saldo_pendiente | currency }}</td>
+              <tr *ngFor="let cobro of cobrosFiltrados">
+                <td>
+                  <div class="fw-bold">{{ cobro.nombre_estudiante }}</div>
+                  <small class="text-muted">{{ cobro.codigo_estudiante }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-info">{{ cobro.curso }}</span>
+                </td>
+                <td>{{ cobro.monto_mensual | currency:'USD':'symbol':'1.2-2' }}</td>
+                <td>
+                  <small>{{ cobro.concepto }}</small>
+                </td>
+                <td>
+                  <span [class]="cobro.estado_pago_calculado === 'Pago vencido' ? 'text-danger fw-bold' : ''">
+                    {{ cobro.fecha_vencimiento | date:'dd/MM/yyyy' }}
+                  </span>
+                </td>
+                <td class="text-danger fw-bold">
+                  {{ cobro.saldo_pendiente | currency:'USD':'symbol':'1.2-2' }}
+                </td>
                 <td>
                   <span [class]="getEstadoClass(cobro.estado_pago_calculado)">
                     {{ cobro.estado_pago_calculado }}
@@ -39,15 +122,25 @@
                 </td>
                 <td>
                   <button
-                    *ngIf="cobro.estado_pago_calculado !== 'Pagado'"
+                    *ngIf="puedeCobrar(cobro)"
                     class="btn btn-success btn-sm"
                     (click)="abrirModalPago(cobro)"
+                    title="Registrar pago"
                   >
-                    Cobrar
+                    <i class="fa fa-money-bill-wave"></i> Cobrar
                   </button>
-                  <span *ngIf="cobro.estado_pago_calculado === 'Pagado'" class="badge bg-success">
-                    Pagado
+                  <span *ngIf="!puedeCobrar(cobro)" class="badge bg-success">
+                    <i class="fa fa-check"></i> Pagado
                   </span>
+                </td>
+              </tr>
+              <tr *ngIf="cobrosFiltrados.length === 0">
+                <td colspan="8" class="text-center text-muted py-4">
+                  <i class="fa fa-search fa-2x mb-2"></i>
+                  <p>No hay cobros que coincidan con los filtros aplicados</p>
+                  <button class="btn btn-sm btn-outline-primary" (click)="limpiarFiltros()">
+                    <i class="fa fa-times"></i> Limpiar filtros
+                  </button>
                 </td>
               </tr>
             </tbody>

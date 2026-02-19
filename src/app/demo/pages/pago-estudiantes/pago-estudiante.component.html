@@ -129,3 +129,72 @@
     </div>
   </div>
 </div>
+
+
+<div class="modal fade show" *ngIf="mostrarComprobante" 
+     style="display: block; background: rgba(0,0,0,0.5);" 
+     tabindex="-1" 
+     [class.modal-open]="mostrarComprobante">
+  
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="feather icon-check-circle me-2"></i>
+          ✅ Pago Registrado Exitosamente
+        </h5>
+        <button type="button" class="btn-close btn-close-white" 
+                (click)="cerrarComprobante()"></button>
+      </div>
+      
+      <div class="modal-body text-center">
+       
+        <app-comprobante-pago 
+          *ngIf="comprobanteDatos" 
+          [datos]="comprobanteDatos">
+        </app-comprobante-pago>
+
+       
+        <div class="mt-4 no-print">
+          <button class="btn btn-primary btn-sm me-2 mb-2" 
+                  (click)="imprimirComprobante()">
+            <i class="feather icon-printer me-1"></i>
+            🖨️ Imprimir Comprobante
+          </button>
+          
+          <button class="btn btn-info btn-sm me-2 mb-2" 
+                  (click)="descargarPDF()">
+            <i class="feather icon-download me-1"></i>
+            📄 Descargar PDF
+          </button>
+          
+          <button class="btn btn-outline-secondary btn-sm mb-2" 
+                  (click)="cerrarComprobante()">
+            <i class="feather icon-x me-1"></i>
+            Cerrar
+          </button>
+        </div>
+        
+        <div class="alert alert-info mt-3 no-print">
+          <small>
+            <i class="feather icon-info me-1"></i>
+            El comprobante está optimizado para impresoras térmicas de 80mm
+          </small>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" 
+                (click)="cerrarComprobante()">
+          <i class="feather icon-check me-1"></i>
+          Continuar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-backdrop fade show" 
+     *ngIf="mostrarComprobante" 
+     (click)="cerrarComprobante()"></div>

@@ -13,6 +13,7 @@ export interface EstudianteSearchResult {
   curso_nombre: string;
   modalidad: 'presencial' | 'virtual' | 'hibrido';
   horario: string;
+  ci: string;
   duracion_meses: number;
   fecha_inicio: string;
   monto_inscripcion: number;

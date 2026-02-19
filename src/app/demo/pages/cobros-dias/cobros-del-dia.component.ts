@@ -1,5 +1,3 @@
-// src/app/demo/pages/cobros-dias/cobros-del-dia.component.ts
-
 import { Component, OnInit } from '@angular/core';
 import { SharedModule } from 'src/app/theme/shared/shared.module';
 import { 
@@ -13,24 +11,37 @@ import {
   FormGroup,
   Validators
 } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+
+import { ComprobantePagoComponent, DatosComprobante } from '../pago-estudiantes/comprobante-pago/comprobante-pago.component';
 
 @Component({
   selector: 'app-cobros-del-dia',
-  imports: [SharedModule, ReactiveFormsModule],
+  standalone: true,
+  imports: [
+    SharedModule, 
+    ReactiveFormsModule,
+    CommonModule,
+    ComprobantePagoComponent  
+  ],
   templateUrl: './cobros-del-dia.component.html'
 })
 export class CobrosDelDiaComponent implements OnInit {
   cobrosData: any = null;
   cobros: CobroDelDia[] = [];
-   cobrosFiltrados: CobroDelDia[] = [];
+  cobrosFiltrados: CobroDelDia[] = [];
   loading = false;
   total = 0;
   
   modalPagoVisible = false;
   registrandoPago = false;
   cobroSeleccionado: CobroDelDia | null = null;
+  
 
-    filtrosForm: FormGroup = this.fb.group({
+  mostrarComprobante = false;
+  comprobanteDatos: DatosComprobante | null = null;
+
+  filtrosForm: FormGroup = this.fb.group({
     curso: [''],
     estudiante: ['']
   });
@@ -52,8 +63,15 @@ export class CobrosDelDiaComponent implements OnInit {
     { value: 'tarjeta', label: 'Tarjeta' }
   ];
 
-    cursosUnicos: string[] = [];
+  cursosUnicos: string[] = [];
   estudiantesUnicos: string[] = [];
+
+  private readonly ESTABLECIMIENTO = {
+    nombre: 'Instituto IBCT',
+    nit: '1234567890',
+    direccion: 'Av. Principal #123',
+    telefono: '+591 2 222-3333'
+  };
 
   constructor(
     private pagoService: PagoEstudianteService,
@@ -63,7 +81,7 @@ export class CobrosDelDiaComponent implements OnInit {
   ngOnInit(): void {
     this.loadCobrosDelDia();
 
-        this.filtrosForm.valueChanges.subscribe(() => {
+    this.filtrosForm.valueChanges.subscribe(() => {
       this.aplicarFiltros();
     });
   }
@@ -79,16 +97,14 @@ export class CobrosDelDiaComponent implements OnInit {
       next: (response) => {
         console.log('🔍 Respuesta completa del servicio:', response);
         this.cobros = response.data?.cobros || [];
-        
-        // Extraer cursos y estudiantes únicos para los filtros
+
         this.cursosUnicos = [...new Set(this.cobros.map(c => c.curso).filter(Boolean))];
         this.estudiantesUnicos = [...new Set(this.cobros.map(c => c.nombre_estudiante).filter(Boolean))];
         
         this.cobrosFiltrados = [...this.cobros];
         this.total = response.data?.total || 0;
         
-        // DEBUG: Ver los estados de cada cobro
-        console.log('📊 Estados de cobros:', this.cobros.map(c => ({
+        console.log(' Estados de cobros:', this.cobros.map(c => ({
           nombre: c.nombre_estudiante,
           estado: c.estado_pago_calculado,
           puedeCobrar: this.puedeCobrar(c)
@@ -111,12 +127,10 @@ export class CobrosDelDiaComponent implements OnInit {
       let cumpleCurso = true;
       let cumpleEstudiante = true;
 
-      // Filtro por curso (búsqueda parcial e insensible a mayúsculas)
       if (curso && curso.trim() !== '') {
         cumpleCurso = cobro.curso?.toLowerCase().includes(curso.toLowerCase().trim());
       }
 
-      // Filtro por estudiante (búsqueda parcial e insensible a mayúsculas)
       if (estudiante && estudiante.trim() !== '') {
         cumpleEstudiante = cobro.nombre_estudiante?.toLowerCase().includes(estudiante.toLowerCase().trim());
       }
@@ -142,7 +156,6 @@ export class CobrosDelDiaComponent implements OnInit {
     }
   }
 
-  // Métodos para el modal de pago
   abrirModalPago(cobro: CobroDelDia): void {
     this.cobroSeleccionado = cobro;
     this.prepararPago(cobro);
@@ -204,9 +217,15 @@ export class CobrosDelDiaComponent implements OnInit {
       next: (res) => {
         this.registrandoPago = false;
         if (res.success) {
+         
+          this.generarComprobante(raw, res.data);
+          
           alert('Pago registrado exitosamente');
           this.cerrarModalPago();
-          this.loadCobrosDelDia(); // Recargar la lista
+          this.loadCobrosDelDia(); 
+          
+        
+          this.mostrarComprobante = true;
         } else {
           alert(res.message || 'Error al registrar pago');
         }
@@ -219,11 +238,90 @@ export class CobrosDelDiaComponent implements OnInit {
     });
   }
 
+  
+  private generarComprobante(pagoRaw: any, respuestaBackend: any): void {
+    if (!this.cobroSeleccionado) return;
+
+    
+    const ciEstudiante = (this.cobroSeleccionado as any).ci || 
+                         (this.cobroSeleccionado as any).documento || 
+                         (this.cobroSeleccionado as any).codigo_estudiante || 
+                         'N/A';
+
+    this.comprobanteDatos = {
+      establecimiento: this.ESTABLECIMIENTO.nombre,
+      nit: this.ESTABLECIMIENTO.nit,
+      direccion: this.ESTABLECIMIENTO.direccion,
+      telefono: this.ESTABLECIMIENTO.telefono,
+      numero_comprobante: respuestaBackend?.numero_comprobante || `CD-${Date.now()}`,
+      fecha_emision: new Date().toISOString(),
+      estudiante: this.cobroSeleccionado.nombre_estudiante,
+      ci_estudiante: ciEstudiante,
+      curso: this.cobroSeleccionado.curso,
+      concepto: this.cobroSeleccionado.concepto || pagoRaw.observaciones || 'Pago de mensualidad',
+      monto_total: parseFloat(pagoRaw.monto),
+      metodo_pago: pagoRaw.metodo_pago,
+      numero_recibo: pagoRaw.numero_recibo || undefined,
+      observaciones: pagoRaw.observaciones || undefined,
+      usuario_cajero: 'Cajero 01', 
+      firma_digital: respuestaBackend?.qr_code_url || undefined
+    };
+  }
+
+ 
+  imprimirComprobante(): void {
+    const comprobanteElement = document.getElementById('comprobante');
+    if (comprobanteElement) {
+      window.print();
+    }
+  }
+
+  async descargarPDF(): Promise<void> {
+    try {
+      const jsPDFModule = await import('jspdf');
+      const html2canvasModule = await import('html2canvas');
+      
+      const jsPDF = (jsPDFModule as any).default || (jsPDFModule as any).jsPDF;
+      const html2canvas = (html2canvasModule as any).default || html2canvasModule;
+      
+      const elemento = document.getElementById('comprobante');
+      if (!elemento) return;
+
+      const canvas = await html2canvas(elemento, {
+        scale: 2,
+        width: 304,
+        windowWidth: 304,
+        useCORS: true,
+        logging: false
+      } as any);
+
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [80, 200]
+      });
+
+      const imgHeight = (canvas.height * 80) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, 80, imgHeight);
+      pdf.save(`comprobante-cobro-${Date.now()}.pdf`);
+      
+    } catch (error) {
+      console.error('Error al generar PDF:', error);
+      alert('Error al generar PDF. Verifica que las librerías estén instaladas.');
+    }
+  }
+
+  cerrarComprobante(): void {
+    this.mostrarComprobante = false;
+    this.comprobanteDatos = null;
+  }
+
   get p() {
     return this.pagoForm.controls;
   }
 
-  // Método para determinar si se puede cobrar
   puedeCobrar(cobro: CobroDelDia): boolean {
     return cobro.estado_pago_calculado !== 'Pagado' && 
            cobro.estado_pago_calculado !== 'Pago no generado';

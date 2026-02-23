@@ -115,6 +115,7 @@
           <th>Monto Total</th>
           <th>Inicio</th>
           <th>Fin</th>
+          <th>Estado</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -147,6 +148,17 @@
           <td>{{ est.monto_total | currency:'BOB':'symbol':'1.2-2' }}</td>
           <td>{{ est.fecha_inicio | date:'dd/MM/yyyy' }}</td>
           <td>{{ est.fecha_fin_estimada | date:'dd/MM/yyyy' }}</td>
+          <td>
+          <span class="badge" 
+                [ngClass]="{
+                  'bg-success': est.estado === 'activo',
+                  'bg-secondary': est.estado === 'inactivo',
+                  'bg-warning': est.estado === 'suspendido',
+                  'bg-info': est.estado === 'egresado'
+                }">
+            {{ est.estado || 'activo' | titlecase }}
+          </span>
+        </td>
           <td>
             <div class="btn-group" role="group">
               <button 
@@ -248,6 +260,40 @@
               Email válido es requerido
             </div>
           </div>
+          <!-- Después del campo Email, agrega esto -->
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label">Estado <span class="text-danger">*</span></label>
+            <select
+              formControlName="estado"
+              class="form-select"
+              [class.is-invalid]="f['estado'].touched && f['estado'].invalid"
+            >
+              <option *ngFor="let estado of estadosEstudiante" [value]="estado.value">
+                {{ estado.label }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="f['estado'].touched && f['estado'].invalid">
+              Debe seleccionar un estado
+            </div>
+          </div>
+          
+          <!-- Badge visual del estado actual (solo en edición) -->
+          <div class="col-md-8 d-flex align-items-end">
+            <span 
+              *ngIf="esEdicion && f['estado'].value"
+              class="badge"
+              [ngClass]="{
+                'bg-success': f['estado'].value === 'activo',
+                'bg-secondary': f['estado'].value === 'inactivo',
+                'bg-warning': f['estado'].value === 'suspendido',
+                'bg-info': f['estado'].value === 'egresado'
+              }"
+            >
+              Estado actual: {{ f['estado'].value | titlecase }}
+            </span>
+          </div>
+        </div>
         </div>
 
         <div class="row mb-3">
@@ -290,22 +336,28 @@
     <div class="col-xl-12">
       <app-card cardTitle="Datos del Curso" [options]="false">
         <div class="row mb-3">
-          <div class="col-md-4">
-            <label class="form-label">Curso <span class="text-danger">*</span></label>
-            <select 
-              formControlName="curso_id" 
-              class="form-select" 
-              [class.is-invalid]="f['curso_id'].touched && f['curso_id'].invalid"
-            >
-              <option [ngValue]="null">-- Seleccionar --</option>
-              <option *ngFor="let curso of cursos" [ngValue]="curso.id">
-                {{ curso.nombre }} ({{ curso.duracion_meses }} meses - Bs. {{ curso.precio_total }})
-              </option>
-            </select>
-            <div class="invalid-feedback" *ngIf="f['curso_id'].touched && f['curso_id'].invalid">
-              Debe seleccionar un curso
-            </div>
-          </div>
+<!-- Curso - BLOQUEADO EN EDICIÓN -->
+<div class="col-md-4">
+  <label class="form-label">Curso <span class="text-danger">*</span></label>
+  <select
+    formControlName="curso_id"
+    class="form-select"
+    [class.is-invalid]="f['curso_id'].touched && f['curso_id'].invalid"
+    [disabled]="esEdicion"
+  >
+    <option [ngValue]="null">-- Seleccionar --</option>
+    <option *ngFor="let curso of cursos" [ngValue]="curso.id">
+      {{ curso.nombre }} ({{ curso.duracion_meses }} meses - Bs. {{ curso.precio_total }})
+    </option>
+  </select>
+  <div class="invalid-feedback" *ngIf="f['curso_id'].touched && f['curso_id'].invalid">
+    Debe seleccionar un curso
+  </div>
+  <!-- Badge informativo cuando está bloqueado -->
+  <small *ngIf="esEdicion" class="text-muted">
+    <i class="fa fa-lock me-1"></i>El curso no se puede modificar
+  </small>
+</div>
 
 <!-- ✅ NUEVO: Selección de Horario - Diseño Mejorado -->
 <div class="col-md-8" *ngIf="cursoSeleccionado">

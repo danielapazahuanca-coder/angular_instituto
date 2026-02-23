@@ -53,6 +53,7 @@ export interface RegistroCompletoDTO {
   
   observaciones_inscripcion: string | null;
   usuario_registro_id: number | null;
+  estado : string;
 }
 
 export interface EstudianteInscrito {
@@ -83,6 +84,7 @@ export interface EstudianteInscrito {
   descuento?: number;
   tipo_pago?: string;
   observaciones_inscripcion?: string | null;
+  estado? : string;
   
 }
 

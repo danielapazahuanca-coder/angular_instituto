@@ -41,6 +41,13 @@ export class RegistroCompletoComponent implements OnInit {
   montoTotal = 0;
   saldoPendiente = 0;
 
+  estadosEstudiante = [
+    { value: 'activo', label: 'Activo', class: 'bg-success' },
+    { value: 'inactivo', label: 'Inactivo', class: 'bg-secondary' },
+    { value: 'suspendido', label: 'Suspendido', class: 'bg-warning' },
+    { value: 'egresado', label: 'Egresado', class: 'bg-info' }
+  ];
+
   metodosPago = [
     { value: 'efectivo', label: 'Efectivo' },
     { value: 'qr', label: 'QR' },
@@ -85,6 +92,7 @@ export class RegistroCompletoComponent implements OnInit {
       pago_inscripcion: [0],
       metodo_pago: ['efectivo', [Validators.required]],
       numero_recibo: [''],
+      estado: ['activo', [Validators.required]], 
       
       observaciones_inscripcion: ['']
     });
@@ -144,9 +152,11 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       duracion_meses: estudiante.duracion_meses,
       descuento: estudiante.descuento || 0,
       tipo_pago: estudiante.tipo_pago || 'mensual',
+      estado: estudiante.estado,
       
       observaciones_inscripcion: estudiante.observaciones_inscripcion || ''
     });
+    console.log('Estudiantes:', this.registroForm);
 
     setTimeout(() => {
       this.onCursoChange(estudiante.curso_id);
@@ -160,7 +170,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
     this.configurarCalculosAutomaticos();
     this.cargarEstudiantes();
   }
-   // Método para aplicar filtros
+  
   aplicarFiltros(): void {
   this.estudiantesFiltrados = this.estudiantesInscritos.filter(estudiante => {
     let cumpleFiltros = true;
@@ -412,6 +422,7 @@ registrarEstudiante(): void {
       duracion_meses: parseInt(formValue.duracion_meses),
       descuento: parseFloat(formValue.descuento || 0),
       tipo_pago: formValue.tipo_pago,
+      estado: formValue.estado || 'activo',
       
       pago_inscripcion: parseFloat(formValue.monto_inscripcion),
       metodo_pago: metodoPago,
@@ -472,6 +483,7 @@ actualizarEstudiante(): void {
       duracion_meses: parseInt(formValue.duracion_meses),
       descuento: parseFloat(formValue.descuento || 0),
       tipo_pago: formValue.tipo_pago,
+      estado: formValue.estado || 'activo',
       
       observaciones_inscripcion: formValue.observaciones_inscripcion || null,
       usuario_registro_id: null
@@ -508,6 +520,7 @@ cargarEstudiantes(): void {
           horario_turno: est.turno,        
           horario_dias: est.dias_semana  
         }));
+        console.log('Estudiantes:', this.estudiantesInscritos);
         this.aplicarFiltros();
       } else {
         this.estudiantesInscritos = [];

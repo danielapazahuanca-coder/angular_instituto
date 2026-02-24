@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms'
+import {AuthGuard} from './guards/auth.guard'
 
 // project import
 import { AdminComponent } from './theme/layout/admin/admin.component';
@@ -50,7 +51,9 @@ const routes: Routes = [
       },
       {
         path: 'usuarios',
-        loadComponent: () => import('./demo/pages/usuarios/usuario.component').then((c) => c.UsuarioComponent)
+        loadComponent: () => import('./demo/pages/usuarios/usuario.component')  .then((c) => c.UsuarioComponent),
+        canActivate: [AuthGuard],
+        data: { roles: ['admin'] }
       },
      {
         path: 'modalidades',
@@ -66,7 +69,9 @@ const routes: Routes = [
       },
        {
         path: 'cursos',
-        loadComponent: () => import('./demo/pages/cursos/curso.component').then((c) => c.CursoComponent)
+        loadComponent: () => import('./demo/pages/cursos/curso.component').then((c) => c.CursoComponent),
+                canActivate: [AuthGuard],
+        data: { roles: ['admin'] }
       },
       {
         path: 'periodosAcademicos',

@@ -21,6 +21,7 @@ export interface Curso {
   precio_total: number;
   precio_mensual: number;
   descripcion: string | null;
+  tipo?: number;
   activo: boolean;
   fecha_creacion: string;      
   fecha_actualizacion: string;
@@ -34,6 +35,7 @@ export interface CrearCursoDTO {
   precio_total: number;
   precio_mensual: number;
   descripcion?: string;
+  tipo?: number;
   activo?: boolean;
   horarios?: HorarioDTO[]; 
 }

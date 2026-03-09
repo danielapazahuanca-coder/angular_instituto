@@ -113,14 +113,14 @@ export const NavigationItems: NavigationItem[] = [
             title: 'Cursos',
             type: 'item',
             url: '/admin/cursos'
-          }/*,
-                    {
-            id: 'button',
-            title: 'Cursos',
-            type: 'item',
-            url: '/admin/cursos'
           },
                     {
+            id: 'button',
+            title: 'Carreras',
+            type: 'item',
+            url: '/admin/carreras'
+          },
+               /*     {
             id: 'button',
             title: 'Materias',
             type: 'item',

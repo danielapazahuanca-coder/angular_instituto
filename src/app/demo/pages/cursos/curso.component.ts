@@ -108,8 +108,10 @@ export class CursoComponent implements OnInit {
     this.cargando = true;
     this.cursoService.getCursos().subscribe({
       next: (res) => {
-        this.cursos = res.success ? (res.data as Curso[]) : [];
+        const cursos = res.success ? (res.data as Curso[]) : [];
+        this.cursos = cursos.filter(c => Number(c.tipo) === 1);
         this.cargando = false;
+        console.log('cursos',this.cursos);
       },
       error: () => {
         this.cargando = false;
@@ -262,6 +264,7 @@ enviarFormulario(): void {
       precio_total: formValue.precio_total,
       precio_mensual: formValue.precio_mensual,
       descripcion: formValue.descripcion || undefined,
+      tipo: 1,
       activo: formValue.activo,
       horarios: formValue.horarios
     };

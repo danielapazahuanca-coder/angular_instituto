@@ -61,7 +61,9 @@ const routes: Routes = [
       },
       {
         path: 'carreras',
-        loadComponent: () => import('./demo/pages/carreras/carrera.component').then((c) => c.CarreraComponent)
+        loadComponent: () => import('./demo/pages/carreras/carrera.component').then((c) => c.CarreraComponent),
+                        canActivate: [AuthGuard],
+        data: { roles: ['admin'] }
       },
       {
         path: 'materias',

@@ -1,174 +1,294 @@
-// carrera.component.ts
+// curso.component.ts
 
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, FormGroup, FormArray, Validators } from '@angular/forms';
 import { SharedModule } from 'src/app/theme/shared/shared.module';
-import { CarreraService, Carrera, CrearCarreraDTO, ActualizarCarreraDTO } from '../../../services/carrera.service';
-import { ModalidadService, Modalidad } from '../../../services/modalidad.service';
+import {
+  CursoService,
+  Curso,
+  CrearCursoDTO,
+  ActualizarCursoDTO,
+  HorarioDTO
+} from '../../../services/curso.service';
 
 @Component({
-  selector: 'app-carrera',
-  imports: [SharedModule, ReactiveFormsModule],
+  selector: 'app-curso',
   templateUrl: './carrera.component.html',
-  //styleUrls: ['./carrera.component.scss']
+  imports: [SharedModule, ReactiveFormsModule]
 })
 export class CarreraComponent implements OnInit {
-  carreras: Carrera[] = [];
-  modalidades: Modalidad[] = [];
+  cursos: Curso[] = [];
   cargando = false;
   modalVisible = false;
   editando = false;
-  carreraActual: Carrera | null = null;
+  cursoActual: Curso | null = null;
 
-  carreraForm: FormGroup = this.fb.group({
+  cursoForm: FormGroup = this.fb.group({
     id: [null],
-    modalidad_id: [1, [Validators.required]],
-    codigo: ['', [Validators.required]],
     nombre: ['', [Validators.required]],
+    duracion_meses: [1, [Validators.required]],
+    modalidad: ['presencial', [Validators.required]],
+    precio_total: [0, [Validators.required, Validators.min(0)]],
+    precio_mensual: [0, [Validators.required, Validators.min(0)]],
     descripcion: [''],
-    duracion_semestres: [8, [Validators.required, Validators.min(1)]],
-    creditos_totales: [null],
-    requisitos: [''],
-    perfil_egreso: [''],
-    campo_laboral: [''],
-    costo_inscripcion: [null],
-    costo_mensual: [null]
+    activo: [true],
+    horarios: this.fb.array([this.crearHorarioFormGroup()]) 
   });
+
+  duracionOpciones = [
+    { value: 12, label: '1 año' },
+    { value: 24, label: '2 años' },
+    { value: 36, label: '3 años' },
+    { value: 42, label: '3.5 años' }
+  ];
+
+  modalidadOpciones = [
+    { value: 'presencial', label: 'Presencial' },
+    { value: 'virtual', label: 'Virtual' },
+    { value: 'hibrido', label: 'Híbrido' }
+  ];
 
   constructor(
     private fb: FormBuilder,
-    private carreraService: CarreraService,
-    private modalidadService: ModalidadService
+    private cursoService: CursoService
   ) {}
 
-  ngOnInit(): void {
-    this.cargarModalidades();
-    this.cargarCarreras();
+
+  get horarios(): FormArray {
+    return this.cursoForm.get('horarios') as FormArray;
   }
 
-  cargarModalidades(): void {
-    this.modalidadService.getModalidades().subscribe({
-      next: (res) => {
-        this.modalidades = res.success ? (res.data as Modalidad[]) : [];
-      },
-      error: () => {
-        // this.toastr.error('Error al cargar modalidades');
-      }
+  crearHorarioFormGroup(): FormGroup {
+    return this.fb.group({
+      id: [null],
+      turno: ['', Validators.required],
+      hora_inicio: ['', [Validators.required, this.validarHora]],
+      hora_fin: ['', [Validators.required, this.validarHora]],
+      dias_semana: ['', Validators.required]
     });
   }
 
-  cargarCarreras(): void {
+  validarHora(control: any) {
+    const valor = control.value;
+    if (!valor) return null;
+    const regex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return regex.test(valor) ? null : { formatoHoraInvalido: true };
+  }
+
+  ngOnInit(): void {
+    this.cargarCursos();
+
+    this.cursoForm.get('precio_total')?.valueChanges.subscribe(() => {
+      this.calcularPrecioMensual();
+    });
+
+    this.cursoForm.get('duracion_meses')?.valueChanges.subscribe(() => {
+      this.calcularPrecioMensual();
+    });
+  }
+
+    private calcularPrecioMensual(): void {
+    const total = this.cursoForm.get('precio_total')?.value || 0;
+    const duracion = this.cursoForm.get('duracion_meses')?.value || 1;
+
+    if (duracion > 0) {
+      const mensual = total / duracion;
+      this.cursoForm.patchValue({
+        precio_mensual: Math.round(mensual * 100) / 100
+      }, { emitEvent: false }); 
+    }
+  }
+
+  cargarCursos(): void {
     this.cargando = true;
-    this.carreraService.getCarreras().subscribe({
+    this.cursoService.getCursos().subscribe({
       next: (res) => {
-        this.carreras = res.success ? (res.data as Carrera[]) : [];
+        const cursos = res.success ? (res.data as Curso[]) : [];
+        this.cursos = cursos.filter(c => Number(c.tipo) === 2);
         this.cargando = false;
       },
       error: () => {
         this.cargando = false;
-        // this.toastr.error('Error al cargar carreras');
+        // this.toastr.error('Error al cargar cursos');
       }
     });
   }
 
   abrirModalCrear(): void {
     this.editando = false;
-    this.carreraActual = null;
-    this.carreraForm.reset({
+    this.cursoActual = null;
+    this.cursoForm.reset({
       id: null,
-      modalidad_id: 1,
-      codigo: '',
       nombre: '',
+      duracion_meses: 1,
+      modalidad: 'presencial',
+      precio_total: 0,
+      precio_mensual: 0,
       descripcion: '',
-      duracion_semestres: 8,
-      creditos_totales: null,
-      requisitos: '',
-      perfil_egreso: '',
-      campo_laboral: '',
-      costo_inscripcion: null,
-      costo_mensual: null
+      activo: true
     });
+
+    this.horarios.clear();
+    this.horarios.push(this.crearHorarioFormGroup());
     this.modalVisible = true;
   }
 
-  abrirModalEditar(carrera: Carrera): void {
-    this.editando = true;
-    this.carreraActual = carrera;
-    this.carreraForm.patchValue({
-      id: carrera.id,
-      modalidad_id: carrera.modalidad_id,
-      codigo: carrera.codigo,
-      nombre: carrera.nombre,
-      descripcion: carrera.descripcion || '',
-      duracion_semestres: carrera.duracion_semestres,
-      creditos_totales: carrera.creditos_totales,
-      requisitos: carrera.requisitos || '',
-      perfil_egreso: carrera.perfil_egreso || '',
-      campo_laboral: carrera.campo_laboral || '',
-      costo_inscripcion: carrera.costo_inscripcion,
-      costo_mensual: carrera.costo_mensual
-    });
-    this.modalVisible = true;
-  }
+abrirModalEditar(cursoId: number): void {
+  this.cargando = true;
+  this.cursoService.getCursoById(cursoId).subscribe({
+    next: (res) => {
+      this.cargando = false;
+      if (res.success && res.data) {
+        const curso = res.data as Curso;
 
-  enviarFormulario(): void {
-    if (this.carreraForm.invalid) {
-      this.carreraForm.markAllAsTouched();
-      return;
+        console.log(' Curso cargado para edición:', curso);
+
+        this.editando = true;
+        this.cursoActual = curso;
+
+        this.cursoForm.patchValue({
+          id: curso.id,
+          nombre: curso.nombre,
+          duracion_meses: curso.duracion_meses,
+          modalidad: curso.modalidad,
+          precio_total: curso.precio_total,
+          precio_mensual: curso.precio_mensual,
+          descripcion: curso.descripcion || '',
+          activo: curso.activo
+        });
+
+        this.horarios.clear();
+
+        if (curso.horarios && curso.horarios.length > 0) {
+          curso.horarios.forEach(h => {
+            this.horarios.push(this.fb.group({
+              id: [h.id],
+              turno: [h.turno, Validators.required],
+              hora_inicio: [h.hora_inicio, [Validators.required, this.validarHora]],
+              hora_fin: [h.hora_fin, [Validators.required, this.validarHora]],
+              dias_semana: [h.dias_semana, Validators.required]
+            }));
+          });
+        } else {
+          this.horarios.push(this.crearHorarioFormGroup());
+        }
+
+        this.modalVisible = true;
+      } else {
+        console.error(' Carrera no encontrado o respuesta inválida');
+        // this.toastr.error('Curso no encontrado');
+      }
+    },
+    error: (err) => {
+      this.cargando = false;
+      console.error(' Error al cargar el curso para edición:', err);
+      // this.toastr.error('Error al cargar el curso');
     }
+  });
+}
 
-    const formValue = this.carreraForm.value;
+  agregarHorario(): void {
+    this.horarios.push(this.crearHorarioFormGroup());
+  }
 
-    const datos: CrearCarreraDTO | ActualizarCarreraDTO = {
-      modalidad_id: formValue.modalidad_id,
-      codigo: formValue.codigo,
+  eliminarHorario(index: number): void {
+    if (this.horarios.length > 1) {
+      this.horarios.removeAt(index);
+    }
+  }
+
+enviarFormulario(): void {
+  console.log(' Iniciando envío del formulario...');
+
+  if (this.cursoForm.invalid) {
+    console.warn(' Formulario inválido. Marcando todos los campos como tocados.');
+    this.cursoForm.markAllAsTouched();
+    this.horarios.markAllAsTouched();
+
+    // Opcional: imprimir qué controles están inválidos
+    console.log('Estado del formulario:', this.cursoForm);
+    console.log('Horarios inválidos:', this.horarios.controls.map((h, i) => ({
+      index: i,
+      valid: h.valid,
+      errors: h.errors,
+      value: h.value
+    })));
+
+    return;
+  }
+
+  const formValue = this.cursoForm.value;
+  console.log(' Formulario válido. Datos a enviar:', formValue);
+
+  if (this.editando && this.cursoActual) {
+    console.log(' Modo: actualización de curso (ID:', this.cursoActual.id, ')');
+
+    const datos: ActualizarCursoDTO = {
       nombre: formValue.nombre,
-      descripcion: formValue.descripcion || undefined,
-      duracion_semestres: formValue.duracion_semestres,
-      creditos_totales: formValue.creditos_totales !== null ? formValue.creditos_totales : undefined,
-      requisitos: formValue.requisitos || undefined,
-      perfil_egreso: formValue.perfil_egreso || undefined,
-      campo_laboral: formValue.campo_laboral || undefined,
-      costo_inscripcion: formValue.costo_inscripcion !== null ? formValue.costo_inscripcion : undefined,
-      costo_mensual: formValue.costo_mensual !== null ? formValue.costo_mensual : undefined
+      duracion_meses: formValue.duracion_meses,
+      modalidad: formValue.modalidad,
+      precio_total: formValue.precio_total,
+      precio_mensual: formValue.precio_mensual,
+      descripcion: formValue.descripcion || null,
+      activo: formValue.activo,
+      horarios: formValue.horarios
     };
 
-    if (this.editando && this.carreraActual) {
-      this.carreraService.actualizarCarrera(this.carreraActual.id, datos as ActualizarCarreraDTO).subscribe({
-        next: () => {
-          // this.toastr.success('Carrera actualizada');
-          this.cerrarModal();
-          this.cargarCarreras();
-        },
-        error: () => {
-          // this.toastr.error('Error al actualizar');
-        }
-      });
-    } else {
-      this.carreraService.crearCarrera(datos as CrearCarreraDTO).subscribe({
-        next: () => {
-          // this.toastr.success('Carrera creada');
-          this.cerrarModal();
-          this.cargarCarreras();
-        },
-        error: () => {
-          // this.toastr.error('Error al crear carrera');
-        }
-      });
-    }
+    console.log(' Enviando datos de actualización:', datos);
+
+    this.cursoService.actualizarCurso(this.cursoActual.id, datos).subscribe({
+      next: (response) => {
+        console.log(' Respuesta del backend (actualización):', response);
+       
+        this.cerrarModal();
+        this.cargarCursos();
+      },  
+      error: (error) => {
+        console.error(' Error al actualizar curso:', error);
+        
+      }
+    });
+  } else {
+    console.log('🆕 Modo: creación de nuevo curso');
+
+    const datos: CrearCursoDTO = {
+      nombre: formValue.nombre,
+      duracion_meses: formValue.duracion_meses,
+      modalidad: formValue.modalidad,
+      precio_total: formValue.precio_total,
+      precio_mensual: formValue.precio_mensual,
+      descripcion: formValue.descripcion || undefined,
+      tipo: 2,
+      activo: formValue.activo,
+      horarios: formValue.horarios
+    };
+
+    console.log(' Enviando datos de creación:', datos);
+
+    this.cursoService.crearCurso(datos).subscribe({
+      next: (response) => {
+        console.log(' Respuesta del backend (creación):', response);
+        this.cerrarModal();
+        this.cargarCursos();
+      },
+      error: (error) => {
+        console.error(' Error al crear curso:', error);
+      }
+    });
   }
+}
 
   cerrarModal(): void {
     this.modalVisible = false;
-    this.carreraForm.reset();
+    this.cursoForm.reset();
   }
 
-  eliminarCarrera(id: number): void {
-    if (confirm('¿Seguro que desea desactivar esta carrera?')) {
-      this.carreraService.eliminarCarrera(id).subscribe({
+  eliminarCurso(id: number): void {
+    if (confirm('¿Seguro que desea desactivar este curso?')) {
+      this.cursoService.eliminarCurso(id).subscribe({
         next: () => {
-          // this.toastr.success('Carrera desactivada');
-          this.cargarCarreras();
+          // this.toastr.success('Curso desactivado');
+          this.cargarCursos();
         },
         error: () => {
           // this.toastr.error('Error al desactivar');
@@ -178,12 +298,10 @@ export class CarreraComponent implements OnInit {
   }
 
   get f() {
-    return this.carreraForm.controls;
+    return this.cursoForm.controls;
   }
 
-  // Método para obtener nombre de modalidad por ID (usado en la tabla)
-  getModalidadNombre(id: number): string {
-    const modalidad = this.modalidades.find(m => m.id === id);
-    return modalidad ? modalidad.nombre : '—';
+  estadoLabel(activo: boolean): string {
+    return activo ? 'Activo' : 'Inactivo';
   }
 }

@@ -22,7 +22,8 @@ export class RegistroCompletoComponent implements OnInit {
   cargando = false;
   cursoSeleccionado: Curso | null = null;
    horariosDisponibles: Horario[] = [];
-  
+   cursosFiltrados: Curso[] = []; 
+     
   modo: 'lista' | 'registro' = 'lista';
   esEdicion = false;
   estudianteEditando: EstudianteInscrito | null = null;
@@ -30,6 +31,7 @@ export class RegistroCompletoComponent implements OnInit {
   estudiantesFiltrados: EstudianteInscrito[] = [];
   mostrarFormulario = true; 
 
+  
    // Variables para filtros
   filtroCursoId: number | null = null;
   filtroHorarioId: number | null = null;
@@ -72,17 +74,20 @@ export class RegistroCompletoComponent implements OnInit {
       apellido_materno: [''],
       ci: [''],
       telefono: [''],
-      email: ['', [Validators.required, Validators.email]],
+      email: [''],
       direccion: [''],
       fecha_nacimiento: [''],
       observaciones_estudiante: [''],
       
+      tipo_formacion: [null, [Validators.required]],
+
       curso_id: [null, [Validators.required]],
       horario_id: [null, [Validators.required]],
       fecha_inicio: ['', [Validators.required]],
       fecha_fin_estimada: [''],
       
       monto_inscripcion: [50, [Validators.required, Validators.min(0)]],
+     
       monto_mensual: ['', [Validators.required, Validators.min(0)]],
       duracion_meses: ['', [Validators.required, Validators.min(1)]],
       descuento: [0, [Validators.min(0), Validators.max(100)]],
@@ -124,6 +129,25 @@ export class RegistroCompletoComponent implements OnInit {
     this.cargarDatosEstudiante(estudiante);
   }
 
+ 
+filtrarCursos(): void {
+  const tipoSeleccionado = this.registroForm.get('tipo_formacion')?.value;
+  
+  
+  this.registroForm.patchValue({ curso_id: null, horario_id: null });
+  this.cursoSeleccionado = null;
+  this.horariosDisponibles = [];
+  
+  if (!tipoSeleccionado) {
+    this.cursosFiltrados = [];
+    return;
+  }
+  
+  
+  this.cursosFiltrados = this.cursos.filter(curso => curso.tipo === tipoSeleccionado);
+  
+  console.log(`🔍 Filtrando por tipo ${tipoSeleccionado}:`, this.cursosFiltrados);
+}
 cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
     const formatearFecha = (fecha: string | null): string => {
       if (!fecha) return '';
@@ -148,6 +172,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       fecha_fin_estimada: formatearFecha(estudiante.fecha_fin_estimada),
       
       monto_inscripcion: estudiante.monto_inscripcion || 50,
+    
       monto_mensual: estudiante.monto_mensual,
       duracion_meses: estudiante.duracion_meses,
       descuento: estudiante.descuento || 0,
@@ -157,6 +182,16 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       observaciones_inscripcion: estudiante.observaciones_inscripcion || ''
     });
     console.log('Estudiantes:', this.registroForm);
+
+  const cursoCargado = this.cursos.find(c => c.id === estudiante.curso_id);
+  if (cursoCargado) {
+    this.registroForm.patchValue({ 
+      tipo_formacion: cursoCargado.tipo 
+    }, { emitEvent: false }); 
+    
+    
+    this.cursosFiltrados = this.cursos.filter(c => c.tipo === cursoCargado.tipo);
+  }
 
     setTimeout(() => {
       this.onCursoChange(estudiante.curso_id);
@@ -169,13 +204,17 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
     //this.cargarCursos();
     this.configurarCalculosAutomaticos();
     this.cargarEstudiantes();
+
+    this.registroForm.get('tipo_formacion')?.valueChanges.subscribe(() => {
+    this.filtrarCursos();
+  });
   }
   
   aplicarFiltros(): void {
   this.estudiantesFiltrados = this.estudiantesInscritos.filter(estudiante => {
     let cumpleFiltros = true;
 
-    // Filtro por curso - convertimos a número si es necesario
+   
     if (this.filtroCursoId !== null && this.filtroCursoId !== undefined) {
       const cursoId = typeof this.filtroCursoId === 'string' ? 
                       parseInt(this.filtroCursoId) : 
@@ -183,7 +222,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       cumpleFiltros = cumpleFiltros && estudiante.curso_id === cursoId;
     }
 
-    // Filtro por horario - convertimos a número si es necesario
+    
     if (this.filtroHorarioId !== null && this.filtroHorarioId !== undefined) {
       const horarioId = typeof this.filtroHorarioId === 'string' ? 
                         parseInt(this.filtroHorarioId) : 
@@ -191,13 +230,13 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       cumpleFiltros = cumpleFiltros && estudiante.horario_id === horarioId;
     }
 
-      // Filtro por nombre (búsqueda parcial, insensible a mayúsculas)
+      
       if (this.filtroNombre && this.filtroNombre.trim()) {
         const nombreCompleto = `${estudiante.nombre} ${estudiante.apellido_paterno} ${estudiante.apellido_materno || ''}`.toLowerCase();
         cumpleFiltros = cumpleFiltros && nombreCompleto.includes(this.filtroNombre.toLowerCase());
       }
 
-      // Filtro por email (búsqueda parcial, insensible a mayúsculas)
+  
       if (this.filtroEmail && this.filtroEmail.trim()) {
         cumpleFiltros = cumpleFiltros && estudiante.email.toLowerCase().includes(this.filtroEmail.toLowerCase());
       }
@@ -206,7 +245,28 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
     });
   }
 
-  // Método para limpiar filtros
+
+formatoDuracion(meses: number): string {
+  if (!meses || meses <= 0) return '0 meses';
+  
+  const anios = Math.floor(meses / 12);
+  const mesesRestantes = meses % 12;
+  
+  let texto = '';
+  
+  if (anios > 0) {
+    texto += `${anios} ${anios === 1 ? 'año' : 'años'}`;
+  }
+  
+  if (mesesRestantes > 0) {
+    if (texto.length > 0) texto += ' y ';
+    texto += `${mesesRestantes} ${mesesRestantes === 1 ? 'mes' : 'meses'}`;
+  }
+  
+  return texto;
+}
+
+  
   limpiarFiltros(): void {
     this.filtroCursoId = null;
     this.filtroHorarioId = null;
@@ -219,6 +279,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
     this.registroService.getCursosConHorarios().subscribe({
       next: (res) => {
         this.cursos = res.success ? (res.data as Curso[]) : [];
+        this.cursosFiltrados = [];
         this.cargando = false;
         
         console.log('✅ Cursos con horarios cargados:', this.cursos);
@@ -418,6 +479,7 @@ registrarEstudiante(): void {
       fecha_fin_estimada: formValue.fecha_fin_estimada,
       
       monto_inscripcion: parseFloat(formValue.monto_inscripcion),
+      monto_reserva: parseFloat(formValue.monto_reserva),
       monto_mensual: parseFloat(formValue.monto_mensual),
       duracion_meses: parseInt(formValue.duracion_meses),
       descuento: parseFloat(formValue.descuento || 0),
@@ -479,6 +541,7 @@ actualizarEstudiante(): void {
       fecha_fin_estimada: formValue.fecha_fin_estimada,
       
       monto_inscripcion: parseFloat(formValue.monto_inscripcion),
+      monto_reserva: parseFloat(formValue.monto_reserva),
       monto_mensual: parseFloat(formValue.monto_mensual),
       duracion_meses: parseInt(formValue.duracion_meses),
       descuento: parseFloat(formValue.descuento || 0),

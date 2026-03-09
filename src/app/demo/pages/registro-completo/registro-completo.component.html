@@ -248,7 +248,7 @@
           </div>
           
           <div class="col-md-4">
-            <label class="form-label">Email <span class="text-danger">*</span></label>
+            <label class="form-label">Email <span class="text-danger"></span></label>
             <input 
               formControlName="email" 
               type="email" 
@@ -256,9 +256,6 @@
               [class.is-invalid]="f['email'].touched && f['email'].invalid"
               placeholder="correo@ejemplo.com"
             />
-            <div class="invalid-feedback" *ngIf="f['email'].touched && f['email'].invalid">
-              Email válido es requerido
-            </div>
           </div>
           <!-- Después del campo Email, agrega esto -->
         <div class="row mb-3">
@@ -331,170 +328,176 @@
     </div>
   </div>
 
-  <!-- SECCIÓN 2: DATOS DEL CURSO -->
-  <div class="row mt-3">
-    <div class="col-xl-12">
-      <app-card cardTitle="Datos del Curso" [options]="false">
-        <div class="row mb-3">
-<!-- Curso - BLOQUEADO EN EDICIÓN -->
-<div class="col-md-4">
-  <label class="form-label">Curso <span class="text-danger">*</span></label>
-  <select
-    formControlName="curso_id"
-    class="form-select"
-    [class.is-invalid]="f['curso_id'].touched && f['curso_id'].invalid"
-    [disabled]="esEdicion"
-  >
-    <option [ngValue]="null">-- Seleccionar --</option>
-    <option *ngFor="let curso of cursos" [ngValue]="curso.id">
-      {{ curso.nombre }} ({{ curso.duracion_meses }} meses - Bs. {{ curso.precio_total }})
-    </option>
-  </select>
-  <div class="invalid-feedback" *ngIf="f['curso_id'].touched && f['curso_id'].invalid">
-    Debe seleccionar un curso
-  </div>
-  <!-- Badge informativo cuando está bloqueado -->
-  <small *ngIf="esEdicion" class="text-muted">
-    <i class="fa fa-lock me-1"></i>El curso no se puede modificar
-  </small>
-</div>
+<!-- SECCIÓN 2: DATOS DEL CURSO -->
+<div class="row mt-3">
+  <div class="col-xl-12">
+    <app-card cardTitle="Datos del Curso/Carrera " [options]="false">
+      
+      <!-- FILA 1: Tipo y Curso (siempre visibles) -->
+      <div class="row mb-3">
+        <!-- Tipo de Formación -->
+        <div class="col-md-4">
+          <label class="form-label">Tipo de Formación <span class="text-danger">*</span></label>
+          <select 
+            formControlName="tipo_formacion" 
+            class="form-select"
+            [class.is-invalid]="f['tipo_formacion'].touched && f['tipo_formacion'].invalid"
+            (change)="filtrarCursos()" 
+          >
+            <option [ngValue]="null">-- Seleccionar --</option>
+            <option [ngValue]="1">Curso</option>
+            <option [ngValue]="2">Carrera</option>
+          </select>
+          <div class="invalid-feedback" *ngIf="f['tipo_formacion'].touched && f['tipo_formacion'].invalid">
+            Debe seleccionar el tipo
+          </div>
+        </div>
 
-<!-- ✅ NUEVO: Selección de Horario - Diseño Mejorado -->
-<div class="col-md-8" *ngIf="cursoSeleccionado">
-  <label class="form-label">Horario <span class="text-danger">*</span></label>
+        <!-- Curso/Carrera -->
+        <div class="col-md-4">
+          <label class="form-label">
+            {{ f['tipo_formacion'].value === 2 ? 'Carrera' : 'Curso' }} 
+            <span class="text-danger">*</span>
+          </label>
+          <select
+            formControlName="curso_id"
+            class="form-select"
+            [class.is-invalid]="f['curso_id'].touched && f['curso_id'].invalid"
+            [disabled]="esEdicion"
+            (change)="onCursoChange(f['curso_id'].value)" 
+          >
+            <option [ngValue]="null">-- Seleccionar --</option>
+            <option *ngFor="let curso of cursosFiltrados" [ngValue]="curso.id">
+              {{ curso.nombre }} ({{ formatoDuracion(curso.duracion_meses) }} - Bs. {{ curso.precio_total }})
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="f['curso_id'].touched && f['curso_id'].invalid">
+            Debe seleccionar un {{ f['tipo_formacion'].value === 2 ? 'carrera' : 'curso' }}
+          </div>
+          <small *ngIf="esEdicion" class="text-muted">
+            <i class="fa fa-lock me-1"></i>El {{ f['tipo_formacion'].value === 2 ? 'carrera' : 'curso' }} no se puede modificar
+          </small>
+        </div>
 
-  <!-- Si hay horarios disponibles -->
-  <div *ngIf="horariosDisponibles.length > 0" class="horarios-container d-flex flex-wrap gap-2">
-    <div 
-      *ngFor="let horario of horariosDisponibles; trackBy: trackByHorario" 
-      class="horario-card p-3 border rounded d-flex align-items-center gap-2"
-      [class.border-primary]="f['horario_id'].value === horario.id"
-      [class.bg-primary]="f['horario_id'].value === horario.id"
-      [class.text-white]="f['horario_id'].value === horario.id"
-      [class.bg-light]="f['horario_id'].value !== horario.id"
-      style="cursor: pointer; min-width: 250px; transition: all 0.2s ease;"
-      (click)="seleccionarHorario(horario.id)"
-    >
-      <!-- Icono/Indicador de Turno -->
-      <div class="d-flex align-items-center justify-content-center" 
-           [ngClass]="{
-             'bg-success text-white': horario.turno === 'mañana',
-             'bg-warning text-dark': horario.turno === 'tarde',
-             'bg-info text-white': horario.turno === 'noche'
-           }"
-           style="width: 36px; height: 36px; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">
-        {{ horario.turno.charAt(0).toUpperCase() }}
+        <!-- Duración (siempre visible) -->
+      <div class="col-md-4">
+        <label class="form-label">Duración (meses) <span class="text-danger">*</span></label>
+        <input 
+          formControlName="duracion_meses" 
+          type="number" 
+          class="form-control" 
+          [class.is-invalid]="f['duracion_meses'].touched && f['duracion_meses'].invalid"
+          min="1"
+          (input)="actualizarTextoDuracion()"
+        />
+        <!-- Texto dinámico que muestra la conversión -->
+        <small class="text-muted" *ngIf="f['duracion_meses'].value">
+          <i class="fa fa-info-circle me-1"></i>
+          Equivale a: <strong>{{ formatoDuracion(f['duracion_meses'].value) }}</strong>
+        </small>
+        <div class="invalid-feedback" *ngIf="f['duracion_meses'].touched && f['duracion_meses'].invalid">
+          La duración es requerida (mínimo 1 mes)
+        </div>
+      </div>
       </div>
 
-      <!-- Contenido del Horario -->
-      <div class="flex-grow-1">
-        <div class="d-flex justify-content-between align-items-center">
-          <span class="fw-bold">{{ horario.turno }}</span>
-          <span class="badge bg-secondary">{{ horario.dias_semana.split(',').length }} días</span>
-        </div>
-        <div class="text-muted small">
-          {{ horario.hora_inicio }} - {{ horario.hora_fin }}
-        </div>
-          <div class="text-muted small mt-1">
-          {{ horario.dias_semana.charAt(0).toUpperCase() + horario.dias_semana.slice(1) }}
-        </div>
-      </div>
+      <!-- FILA 2: Horario (solo cuando hay curso seleccionado) -->
+      <div class="row mb-3" *ngIf="cursoSeleccionado">
+        <div class="col-12">
+          <label class="form-label">Horario <span class="text-danger">*</span></label>
 
-      <!-- Radio Input Oculto (para el formControl) -->
-      <input 
-        type="radio" 
-        [id]="'horario-' + horario.id"
-        [value]="horario.id"
-        formControlName="horario_id"
-        class="form-check-input visually-hidden"
-        [checked]="f['horario_id'].value === horario.id"
-      />
-    </div>
-  </div>
+          <!-- Si hay horarios disponibles -->
+          <div *ngIf="horariosDisponibles.length > 0" class="horarios-container d-flex flex-wrap gap-2">
+            <div 
+              *ngFor="let horario of horariosDisponibles; trackBy: trackByHorario" 
+              class="horario-card p-3 border rounded d-flex align-items-center gap-2"
+              [class.border-primary]="f['horario_id'].value === horario.id"
+              [class.bg-primary]="f['horario_id'].value === horario.id"
+              [class.text-white]="f['horario_id'].value === horario.id"
+              [class.bg-light]="f['horario_id'].value !== horario.id"
+              style="cursor: pointer; min-width: 250px; transition: all 0.2s ease;"
+              (click)="seleccionarHorario(horario.id)"
+            >
+              <!-- Icono/Indicador de Turno -->
+              <div class="d-flex align-items-center justify-content-center" 
+                   [ngClass]="{
+                     'bg-success text-white': horario.turno === 'mañana',
+                     'bg-warning text-dark': horario.turno === 'tarde',
+                     'bg-info text-white': horario.turno === 'noche'
+                   }"
+                   style="width: 36px; height: 36px; border-radius: 50%; font-weight: bold; font-size: 0.8rem;">
+                {{ horario.turno.charAt(0).toUpperCase() }}
+              </div>
 
-  <!-- Si NO hay horarios disponibles -->
-  <div *ngIf="horariosDisponibles.length === 0" class="alert alert-warning mt-2">
-    <i class="fa fa-exclamation-triangle me-1"></i> 
-    No hay horarios disponibles para este curso.
-  </div>
+              <!-- Contenido del Horario -->
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="fw-bold">{{ horario.turno }}</span>
+                  <span class="badge bg-secondary">{{ horario.dias_semana.split(',').length }} días</span>
+                </div>
+                <div class="text-muted small">
+                  {{ horario.hora_inicio }} - {{ horario.hora_fin }}
+                </div>
+                <div class="text-muted small mt-1">
+                  {{ horario.dias_semana.charAt(0).toUpperCase() + horario.dias_semana.slice(1) }}
+                </div>
+              </div>
 
-  <!-- Mensaje de error -->
-  <div class="invalid-feedback d-block mt-2" *ngIf="f['horario_id'].touched && f['horario_id'].invalid">
-    Debe seleccionar un horario.
-  </div>
-</div>
-          
-          <div class="col-md-4">
-            <label class="form-label">Fecha de Inicio <span class="text-danger">*</span></label>
-            <input 
-              formControlName="fecha_inicio" 
-              type="date" 
-              class="form-control" 
-              [class.is-invalid]="f['fecha_inicio'].touched && f['fecha_inicio'].invalid"
-            />
-            <div class="invalid-feedback" *ngIf="f['fecha_inicio'].touched && f['fecha_inicio'].invalid">
-              La fecha de inicio es requerida
-            </div>
-          </div>
-          
-          <div class="col-md-4">
-            <label class="form-label">Fecha de Fin Estimada</label>
-            <input 
-              formControlName="fecha_fin_estimada" 
-              type="date" 
-              class="form-control"
-              readonly
-            />
-            <small class="text-muted">Se calcula automáticamente</small>
-          </div>
-            <div class="col-md-4">
-            <label class="form-label">Duración (meses) <span class="text-danger">*</span></label>
-            <input 
-              formControlName="duracion_meses" 
-              type="number" 
-              class="form-control" 
-              [class.is-invalid]="f['duracion_meses'].touched && f['duracion_meses'].invalid"
-              min="1"
-            />
-            <div class="invalid-feedback" *ngIf="f['duracion_meses'].touched && f['duracion_meses'].invalid">
-              La duración es requerida (mínimo 1 mes)
-            </div>
-          </div>
-        </div>
-
-        <div class="row">
-          
-          <div class="col-md-4">
-            <label class="form-label">Monto Mensual (Bs.) <span class="text-danger">*</span></label>
+              <!-- Radio Input Oculto -->
               <input 
-                formControlName="monto_mensual" 
-                type="number" 
-                step="0.01" 
-                class="form-control" 
-                [class.is-invalid]="f['monto_mensual'].touched && f['monto_mensual'].invalid"
-                min="0"
-                readonly
+                type="radio" 
+                [id]="'horario-' + horario.id"
+                [value]="horario.id"
+                formControlName="horario_id"
+                class="form-check-input visually-hidden"
+                [checked]="f['horario_id'].value === horario.id"
               />
-            <div class="invalid-feedback" *ngIf="f['monto_mensual'].touched && f['monto_mensual'].invalid">
-              El monto mensual es requerido
             </div>
           </div>
-          
-          <div class="col-md-4">
-            <label class="form-label">Monto de Inscripción (Bs.) <span class="text-danger">*</span></label>
-            <input 
-              formControlName="monto_inscripcion" 
-              type="number" 
-              step="0.01" 
-              class="form-control" 
-              [class.is-invalid]="f['monto_inscripcion'].touched && f['monto_inscripcion'].invalid"
-              min="0"
-            />
-            <div class="invalid-feedback" *ngIf="f['monto_inscripcion'].touched && f['monto_inscripcion'].invalid">
-              El monto de inscripción es requerido
-            </div>
+
+          <!-- Si NO hay horarios disponibles -->
+          <div *ngIf="horariosDisponibles.length === 0" class="alert alert-warning mt-2">
+            <i class="fa fa-exclamation-triangle me-1"></i> 
+            No hay horarios disponibles para este {{ f['tipo_formacion'].value === 2 ? 'carrera' : 'curso' }}.
           </div>
-                  <div class="col-md-4">
+
+          <!-- Mensaje de error -->
+          <div class="invalid-feedback d-block mt-2" *ngIf="f['horario_id'].touched && f['horario_id'].invalid">
+            Debe seleccionar un horario.
+          </div>
+        </div>
+      </div>
+
+      <!-- FILA 3: Fechas (solo cuando hay curso seleccionado) -->
+      <div class="row mb-3" *ngIf="cursoSeleccionado">
+        <!-- Fecha de Inicio -->
+        <div class="col-md-4">
+          <label class="form-label">Fecha de Inicio <span class="text-danger">*</span></label>
+          <input 
+            formControlName="fecha_inicio" 
+            type="date" 
+            class="form-control" 
+            [class.is-invalid]="f['fecha_inicio'].touched && f['fecha_inicio'].invalid"
+          />
+          <div class="invalid-feedback" *ngIf="f['fecha_inicio'].touched && f['fecha_inicio'].invalid">
+            La fecha de inicio es requerida
+          </div>
+        </div>
+        
+        <!-- Fecha de Fin Estimada -->
+        <div class="col-md-4">
+          <label class="form-label">Fecha de Fin Estimada</label>
+          <input 
+            formControlName="fecha_fin_estimada" 
+            type="date" 
+            class="form-control"
+            readonly
+          />
+          <small class="text-muted">Se calcula automáticamente</small>
+        </div>
+
+        <!-- Espacio vacío o Método de Pago -->
+        <div class="col-md-4">
           <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
           <select 
             formControlName="metodo_pago" 
@@ -510,10 +513,75 @@
             Debe seleccionar un método de pago
           </div>
         </div>
+      </div>
+
+      <!-- FILA 4: Montos -->
+      <div class="row">
+        <div class="col-md-4">
+          <label class="form-label">Monto Mensual (Bs.) <span class="text-danger">*</span></label>
+          <input 
+            formControlName="monto_mensual" 
+            type="number" 
+            step="0.01" 
+            class="form-control" 
+            [class.is-invalid]="f['monto_mensual'].touched && f['monto_mensual'].invalid"
+            min="0"
+            readonly
+          />
+          <div class="invalid-feedback" *ngIf="f['monto_mensual'].touched && f['monto_mensual'].invalid">
+            El monto mensual es requerido
+          </div>
         </div>
-      </app-card>
-    </div>
+        
+        <div class="col-md-4">
+          <label class="form-label">Pago Matricula (Bs.) <span class="text-danger">*</span></label>
+          <input 
+            formControlName="monto_inscripcion" 
+            type="number" 
+            step="0.01" 
+            class="form-control" 
+            [class.is-invalid]="f['monto_inscripcion'].touched && f['monto_inscripcion'].invalid"
+            min="0"
+          />
+          <div class="invalid-feedback" *ngIf="f['monto_inscripcion'].touched && f['monto_inscripcion'].invalid">
+            El monto de inscripción es requerido
+          </div>
+        </div>
+                <div class="col-md-4">
+          <label class="form-label">Pago Reserva (Bs.) <span class="text-danger">*</span></label>
+          <input 
+            formControlName="monto_reserva" 
+            type="number" 
+            step="0.01" 
+            class="form-control" 
+            
+            min="0"
+          />
+
+        </div>
+
+        <!-- Espacio vacío si moviste Método de Pago arriba -->
+        <div class="col-md-4" *ngIf="!cursoSeleccionado">
+          <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+          <select 
+            formControlName="metodo_pago" 
+            class="form-select" 
+            [class.is-invalid]="f['metodo_pago'].touched && f['metodo_pago'].invalid"
+          >
+            <option [ngValue]="null">-- Seleccionar --</option>
+            <option *ngFor="let metodo of metodosPago" [ngValue]="metodo.value">
+              {{ metodo.label }}
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="f['metodo_pago'].touched && f['metodo_pago'].invalid">
+            Debe seleccionar un método de pago
+          </div>
+        </div>
+      </div>
+
+    </app-card>
   </div>
+</div>
 
   <!-- SECCIÓN 3: CUOTA -->
   <div class="row mt-3">

@@ -19,6 +19,7 @@ export interface Curso {
   duracion_meses: number;
   precio_base: number;
   descripcion?: string;
+  tipo?: number;
   activo?: boolean;
   precio_mensual?: string;
   horarios?: Horario[];
@@ -48,6 +49,7 @@ export interface RegistroCompletoDTO {
   tipo_pago: string;
   
   pago_inscripcion?: number;
+  monto_reserva?: number;
   metodo_pago?: string;
   numero_recibo?: string | null;
   
@@ -71,14 +73,15 @@ export interface EstudianteInscrito {
   curso: string;
   curso_id: number;
   horario_id?: number;
-  turno?: string;           // Cambiado de horario_turno a turno
-  hora_inicio?: string;     // Nuevo campo
-  hora_fin?: string;        // Nuevo campo
+  turno?: string;          
+  hora_inicio?: string;    
+  hora_fin?: string;       
   dias_semana?: string; 
   fecha_inicio: string;
   fecha_fin_estimada: string;
   monto_total: number;
   monto_inscripcion?: number;
+  monto_reserva?: number;
   monto_mensual: number;
   duracion_meses?: number;
   descuento?: number;

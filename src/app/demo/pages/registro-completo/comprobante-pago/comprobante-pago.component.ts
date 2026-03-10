@@ -11,6 +11,8 @@ export interface DatosComprobante {
   estudiante: string;
   ci_estudiante: string;
   curso: string;
+  monto_inscripcion:number;
+  monto_reserva:number;
   concepto: string;
   monto_total: number;
   metodo_pago: string;
@@ -75,10 +77,20 @@ export interface DatosComprobante {
         </div>
         <hr class="dashed">
 
+        <div class="row">
+          <span class="label">Inscripción:</span>
+          <span class="value text-end">{{ datos.monto_inscripcion | currency:'Bs ':'symbol':'1.2' }}</span>
+        </div>
+        <div class="row">
+          <span class="label">Reserva:</span>
+          <span class="value text-end">{{ datos.monto_reserva | currency:'Bs ':'symbol':'1.2' }}</span>
+        </div>
+        <hr class="dashed">
+
         <!-- Total -->
         <div class="total">
           <span class="label">TOTAL PAGADO:</span>
-          <span class="value bold">{{ datos.monto_total | currency:'Bs ':'symbol':'1.2' }}</span>
+          <span class="value bold">{{ getTotalPagado() | currency:'Bs ':'symbol':'1.2' }}</span>
         </div>
 
         <div class="row" *ngIf="datos.observaciones">
@@ -103,6 +115,12 @@ export interface DatosComprobante {
 })
 export class ComprobantePagoComponent {
   @Input() datos!: DatosComprobante;
+
+    getTotalPagado(): number {
+    const inscripcion = this.datos.monto_inscripcion || 0;
+    const reserva = this.datos.monto_reserva || 0;
+    return inscripcion + reserva;
+  }
 
   getMetodoPagoLabel(): string {
     const metodos: { [key: string]: string } = {

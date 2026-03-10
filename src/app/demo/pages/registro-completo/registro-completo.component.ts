@@ -4,6 +4,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SharedModule } from 'src/app/theme/shared/shared.module';
+import { ComprobantePagoComponent, DatosComprobante } from './comprobante-pago/comprobante-pago.component';
 import {
   RegistroCompletoService,
   Curso,
@@ -14,7 +15,7 @@ import {
 @Component({
   selector: 'app-registro-completo',
   templateUrl: './registro-completo.component.html',
-  imports: [SharedModule, ReactiveFormsModule]
+  imports: [SharedModule, ReactiveFormsModule, ComprobantePagoComponent]
 })
 export class RegistroCompletoComponent implements OnInit {
   registroForm: FormGroup;
@@ -30,13 +31,16 @@ export class RegistroCompletoComponent implements OnInit {
   estudiantesInscritos: EstudianteInscrito[] = [];
   estudiantesFiltrados: EstudianteInscrito[] = [];
   mostrarFormulario = true; 
-
   
+  comprobanteDatos: DatosComprobante | null = null;
+  mostrarComprobante: boolean = false;       
+  estudianteSeleccionado: any = null;      
+  deudas: any[] = []; 
    // Variables para filtros
   filtroCursoId: number | null = null;
   filtroHorarioId: number | null = null;
   filtroNombre: string = '';
-  filtroEmail: string = '';
+  filtroCI: string = '';
   
   subtotal = 0;
   montoDescuento = 0;
@@ -47,6 +51,7 @@ export class RegistroCompletoComponent implements OnInit {
     { value: 'activo', label: 'Activo', class: 'bg-success' },
     { value: 'inactivo', label: 'Inactivo', class: 'bg-secondary' },
     { value: 'suspendido', label: 'Suspendido', class: 'bg-warning' },
+    { value: 'congelado', label: 'Congelado', class: 'bg-warning' },
     { value: 'egresado', label: 'Egresado', class: 'bg-info' }
   ];
 
@@ -56,6 +61,12 @@ export class RegistroCompletoComponent implements OnInit {
     { value: 'transferencia', label: 'Transferencia' },
     { value: 'tarjeta', label: 'Tarjeta' }
   ];
+    private readonly ESTABLECIMIENTO = {
+    nombre: 'Instituto IBCT',
+    nit: '1234567890',
+    direccion: 'Av. Principal #123',
+    telefono: '+591 2 222-3333'
+  };
 
   tiposPago = [
     { value: 'mensual', label: 'Mensual' },
@@ -237,9 +248,12 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       }
 
   
-      if (this.filtroEmail && this.filtroEmail.trim()) {
-        cumpleFiltros = cumpleFiltros && estudiante.email.toLowerCase().includes(this.filtroEmail.toLowerCase());
-      }
+
+    if (this.filtroCI && this.filtroCI.trim()) {
+      const ci = (estudiante.ci ?? '').toString().toLowerCase();
+      const filtro = this.filtroCI.toLowerCase();
+      cumpleFiltros = cumpleFiltros && ci.includes(filtro);
+    }
 
       return cumpleFiltros;
     });
@@ -271,7 +285,7 @@ formatoDuracion(meses: number): string {
     this.filtroCursoId = null;
     this.filtroHorarioId = null;
     this.filtroNombre = '';
-    this.filtroEmail = '';
+    this.filtroCI = '';
     this.aplicarFiltros();
   }
   cargarCursosConHorarios(): void {
@@ -351,12 +365,12 @@ formatoDuracion(meses: number): string {
       console.log('📅 Horarios disponibles:', this.horariosDisponibles);
       console.log('📅 Cantidad de horarios:', this.horariosDisponibles.length);
       
-      // Resetear selección de horario solo si no estamos en edición
+      
       if (!this.esEdicion) {
         this.registroForm.patchValue({ horario_id: null });
       }
       
-      // Autocompletar precios y duración
+  
       const precioMensual = parseFloat(this.cursoSeleccionado.precio_mensual || '0') || 0;
       const duracion = this.cursoSeleccionado.duracion_meses || 1;
 
@@ -373,7 +387,7 @@ formatoDuracion(meses: number): string {
     }
   }
 
-  // Método para seleccionar horario al hacer clic en la tarjeta
+  
 seleccionarHorario(horarioId: number): void {
   this.registroForm.get('horario_id')?.setValue(horarioId);
 }
@@ -509,6 +523,7 @@ registrarEstudiante(): void {
       next: (res) => {
         this.cargando = false;
         if (res.success) {
+           this.generarComprobante(formValue, res.data);
           alert('¡Registro completado exitosamente!\n\n' +
                `Estudiante ID: ${res.data?.estudiante_id}\n` +
                `Inscripción ID: ${res.data?.inscripcion_id}\n` +
@@ -609,7 +624,7 @@ getHorariosParaFiltro(): Horario[] {
     return [];
   }
   
-  // Aseguramos que el ID sea número
+
   const cursoId = typeof this.filtroCursoId === 'string' ? 
                   parseInt(this.filtroCursoId) : 
                   this.filtroCursoId;
@@ -618,15 +633,15 @@ getHorariosParaFiltro(): Horario[] {
   return curso?.horarios || [];
 }
 
-  // Obtener nombre del curso por ID
+ 
 getNombreCurso(cursoId: any): string {
-  // Convertir a número si es string
+  
   const id = typeof cursoId === 'string' ? parseInt(cursoId) : cursoId;
   
   const curso = this.cursos.find(c => c.id === id);
   return curso ? curso.nombre : 'Curso desconocido';
 }
-  // Obtener nombre del horario por ID
+ 
   getNombreHorario(horarioId: number): string {
     if (!this.filtroCursoId) return 'Seleccione un curso primero';
     
@@ -654,4 +669,112 @@ getNombreCurso(cursoId: any): string {
   get f() {
     return this.registroForm.controls;
   }
+
+private generarComprobante(pagoRaw: any, respuestaBackend: any): void {
+  const estudiante = this.esEdicion 
+    ? this.estudianteEditando 
+    : respuestaBackend;
+
+  const nombreCompleto = `${estudiante.nombre || ''} ${estudiante.apellido_paterno || ''} ${estudiante.apellido_materno || ''}`.trim();
+  const curso = this.cursos.find(c => c.id === estudiante.curso_id) || this.cursoSeleccionado;
+
+
+  const montoInscripcion = parseFloat(estudiante.monto_inscripcion || pagoRaw.monto_inscripcion || this.registroForm.get('monto_inscripcion')?.value || 0);
+  const montoReserva = parseFloat(estudiante.monto_reserva || pagoRaw.monto_reserva || this.registroForm.get('monto_reserva')?.value || 0);
+  const totalPagado = montoInscripcion + montoReserva;
+
+  this.comprobanteDatos = {
+    establecimiento: this.ESTABLECIMIENTO.nombre,
+    nit: this.ESTABLECIMIENTO.nit,
+    direccion: this.ESTABLECIMIENTO.direccion,
+    telefono: this.ESTABLECIMIENTO.telefono,
+    
+    numero_comprobante: respuestaBackend?.numero_comprobante || `CP-${Date.now()}`,
+    fecha_emision: new Date().toISOString(),
+    
+    estudiante: nombreCompleto || 'Estudiante registrado',
+    ci_estudiante: estudiante.ci || 'N/A',
+    curso: curso?.nombre || this.registroForm.get('curso_id')?.value?.toString() || 'Curso',
+    
+    concepto: 'Inscripción y matrícula - ' + (curso?.nombre || 'Curso'),
+    
+   
+    monto_inscripcion: montoInscripcion,
+    monto_reserva: montoReserva,
+    
+   
+    monto_total: totalPagado,
+    
+    metodo_pago: pagoRaw.metodo_pago || this.registroForm.get('metodo_pago')?.value || 'efectivo',
+    numero_recibo: pagoRaw.numero_recibo || undefined,
+    observaciones: pagoRaw.observaciones_inscripcion || this.registroForm.get('observaciones_inscripcion')?.value || undefined,
+    
+    usuario_cajero: 'Sistema IBCT',
+    firma_digital: respuestaBackend?.qr_code_url || undefined
+  };
+
+  this.mostrarComprobante = true;
+  
+  this.estudianteSeleccionado = {
+    nombre_completo: nombreCompleto,
+    ci: estudiante.ci,
+    curso_nombre: curso?.nombre
+  };
+}
+  imprimirComprobante(): void {
+    const comprobanteElement = document.getElementById('comprobante');
+    if (comprobanteElement) {
+      window.print();
+    }
+  }
+
+async descargarPDF(): Promise<void> {
+  try {
+  
+    const jsPDFModule = await import('jspdf');
+    const html2canvasModule = await import('html2canvas');
+    
+    
+    const jsPDF = (jsPDFModule as any).default || (jsPDFModule as any).jsPDF;
+    const html2canvas = (html2canvasModule as any).default || html2canvasModule;
+    
+    const elemento = document.getElementById('comprobante');
+    if (!elemento) {
+      console.error('Elemento comprobante no encontrado');
+      return;
+    }
+
+    
+    const canvas = await html2canvas(elemento, {
+      scale: 2,
+      width: 304,
+      windowWidth: 304,
+      useCORS: true,
+      logging: false
+    } as any);
+
+    const imgData = canvas.toDataURL('image/png');
+    
+  
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [80, 200]
+    });
+
+    const imgHeight = (canvas.height * 80) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, 80, imgHeight);
+    pdf.save(`comprobante-${Date.now()}.pdf`);
+    
+  } catch (error) {
+    console.error('Error al generar PDF:', error);
+    alert('Error al generar PDF. Verifica que las librerías estén instaladas.');
+  }
+}
+
+ 
+cerrarComprobante(): void {
+  this.mostrarComprobante = false;
+  this.comprobanteDatos = null;
+}
 }

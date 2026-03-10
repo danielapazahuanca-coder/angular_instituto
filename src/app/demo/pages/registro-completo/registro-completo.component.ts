@@ -87,7 +87,7 @@ export class RegistroCompletoComponent implements OnInit {
       fecha_fin_estimada: [''],
       
       monto_inscripcion: [50, [Validators.required, Validators.min(0)]],
-     
+      monto_reserva: [[Validators.required, Validators.min(0)]],
       monto_mensual: ['', [Validators.required, Validators.min(0)]],
       duracion_meses: ['', [Validators.required, Validators.min(1)]],
       descuento: [0, [Validators.min(0), Validators.max(100)]],
@@ -391,19 +391,28 @@ seleccionarHorario(horarioId: number): void {
     }
   }
 
-  calcularMontos(): void {
-    const montoInscripcion = parseFloat(this.registroForm.get('monto_inscripcion')?.value) || 0;
-    const montoMensual = parseFloat(this.registroForm.get('monto_mensual')?.value) || 0;
-    const duracionMeses = parseInt(this.registroForm.get('duracion_meses')?.value) || 0;
-    const descuento = parseFloat(this.registroForm.get('descuento')?.value) || 0;
-    const pagoInscripcion = parseFloat(this.registroForm.get('pago_inscripcion')?.value) || 0;
-    
-    this.subtotal = montoInscripcion + (montoMensual * duracionMeses);
-    this.montoDescuento = (this.subtotal * descuento) / 100;
-    this.montoTotal = this.subtotal - this.montoDescuento;
-    this.saldoPendiente = this.montoTotal - pagoInscripcion;
-  }
+    calcularMontos(): void {
+      const montoInscripcion = parseFloat(this.registroForm.get('monto_inscripcion')?.value) || 0;
+      const montoMensual = parseFloat(this.registroForm.get('monto_mensual')?.value) || 0;
+      const duracionMeses = parseInt(this.registroForm.get('duracion_meses')?.value) || 0;
+      
+      const descuento = parseFloat(this.registroForm.get('descuento')?.value) || 0;
+      
+      const pagoInscripcion = parseFloat(this.registroForm.get('pago_inscripcion')?.value) || 0;
+      
+      this.subtotal = montoInscripcion + (montoMensual * duracionMeses);
+      
 
+      this.montoDescuento = descuento; 
+      
+
+      if (this.montoDescuento > this.subtotal) {
+          this.montoDescuento = this.subtotal;
+      }
+
+      this.montoTotal = this.subtotal - this.montoDescuento;
+      this.saldoPendiente = this.montoTotal - pagoInscripcion;
+    }
   onRealizaPagoChange(realiza: boolean): void {
     const pagoControl = this.registroForm.get('pago_inscripcion');
     const metodoControl = this.registroForm.get('metodo_pago');

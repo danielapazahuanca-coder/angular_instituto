@@ -14,7 +14,8 @@ import {
   EstudianteSearchResult,
   DeudaPendiente,
   RegistrarPagoDTO,
-  ObtenerDeudasDTO
+  ObtenerDeudasDTO,
+  RegistrarPagoNevoDTO
 } from '../../../services/pago-estudiante.service';
 
 @Component({
@@ -40,6 +41,9 @@ export class PagoEstudianteComponent implements OnInit {
   deudas: DeudaPendiente[] = [];
   estudianteSeleccionado: EstudianteSearchResult | null = null;
   
+  modalNuevaCuotaVisible = false;
+  tiposCobro: { id: number; nombre: string }[] = [];
+  registrandoNuevaCuota = false;
   
   comprobanteDatos: DatosComprobante | null = null;
 
@@ -381,5 +385,85 @@ async descargarPDF(): Promise<void> {
   diasVencidoTexto(dias: number | null): string {
     if (dias === null || dias <= 0) return '';
     return `Vencido hace ${dias} día(s)`;
+  }
+  
+  nuevaCuotaForm: FormGroup = this.fb.group({
+  monto: [0, [Validators.required, Validators.min(0.01)]],
+  metodo_pago: ['efectivo', Validators.required],
+  numero_recibo: [''],
+  fecha_pago: [this.fechaHoy(), Validators.required],
+  observaciones: ['']
+  });
+
+    abrirModalNuevaCuota(): void {
+    // Cargar tipos de cobro si aún no están cargados
+    if (this.tiposCobro.length === 0) {
+      this.pagoService.getTiposCobro().subscribe({
+        next: (res) => {
+          this.tiposCobro = res.success ? (res.data || []) : [];
+        },
+        error: () => { this.tiposCobro = []; }
+      });
+    }
+    this.nuevaCuotaForm.reset({
+      tipo_cobro_id: null,
+      monto: 0,
+      metodo_pago: 'efectivo',
+      numero_recibo: '',
+      fecha_pago: this.fechaHoy(),
+      observaciones: ''
+    });
+    this.modalNuevaCuotaVisible = true;
+  }
+
+  cerrarModalNuevaCuota(): void {
+    this.modalNuevaCuotaVisible = false;
+  }
+
+  registrarNuevaCuota(): void {
+    if (this.nuevaCuotaForm.invalid) {
+      this.nuevaCuotaForm.markAllAsTouched();
+      return;
+    }
+    if (!this.estudianteSeleccionado) return;
+
+    const raw = this.nuevaCuotaForm.getRawValue();
+    this.registrandoNuevaCuota = true;
+
+    const pagoData: RegistrarPagoNevoDTO = {
+      inscripcion_id: this.estudianteSeleccionado.inscripcion_id,
+      tipo_cobro_id: 4,
+      monto: parseFloat(raw.monto),
+      metodo_pago: raw.metodo_pago,
+      numero_recibo: raw.numero_recibo?.trim() || null,
+      fecha_pago: new Date(raw.fecha_pago).toISOString(),
+      observaciones: raw.observaciones?.trim() || null,
+      usuario_id: 1,
+      tipo_pago: 'nuevo_cobro'
+    };
+    console.log("Payload nueva cuota:", pagoData);
+
+    this.pagoService.registrarPago(pagoData).subscribe({
+      next: (res) => {
+        this.registrandoNuevaCuota = false;
+        if (res.success) {
+          this.generarComprobante(raw, res.data); // reutiliza el comprobante
+          this.cargarDeudasPendientes(this.estudianteSeleccionado!.inscripcion_id);
+          this.modalNuevaCuotaVisible = false;
+          this.mostrarComprobante = true;
+        } else {
+          console.error('Error:', res.message);
+        }
+      },
+      error: (err) => {
+        this.registrandoNuevaCuota = false;
+        console.error('Error al registrar nueva cuota:', err);
+      }
+    });
+  }
+
+  // Getter para el nuevo form
+  get nc() {
+    return this.nuevaCuotaForm.controls;
   }
 }

@@ -92,16 +92,29 @@ export interface BuscarEstudiantesDTO {
 }
 
 export interface RegistrarPagoDTO {
-  cobro_id: number;
+  cobro_id?: number;           
   inscripcion_id: number;
   monto: number;
   metodo_pago: 'efectivo' | 'qr' | 'transferencia' | 'tarjeta';
-  numero_recibo?: string;
-  fecha_pago?: string; 
-  observaciones?: string;
-  usuario_registro_id?: number; 
+  numero_recibo?: string | null;
+  fecha_pago?: string;
+  observaciones?: string | null;
+  usuario_registro_id?: number;
   usuario_id?: number;
-  tipo_pago: 'deuda_existente';
+  tipo_pago: 'deuda_existente'| 'nuevo_cobro';
+}
+export interface RegistrarPagoNevoDTO {
+  cobro_id?: number;           
+  inscripcion_id: number;
+  tipo_cobro_id:number;
+  monto: number;
+  metodo_pago: 'efectivo' | 'qr' | 'transferencia' | 'tarjeta';
+  numero_recibo?: string | null;
+  fecha_pago?: string;
+  observaciones?: string | null;
+  usuario_registro_id?: number;
+  usuario_id?: number;
+  tipo_pago: 'deuda_existente' | 'nuevo_cobro';
 }
 export interface CobroDelDia {
   cobro_id: number;
@@ -139,6 +152,11 @@ export interface ApiResponse {
   data: any; 
 }
 
+export interface TipoCobro {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+}
 
 @Injectable({
   providedIn: 'root'

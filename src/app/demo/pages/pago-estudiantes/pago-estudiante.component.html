@@ -36,14 +36,24 @@
         </a>
 
     </div>
-  </div>
+  </div>  
 </div>
 
 <!-- Detalles del estudiante y deudas -->
 <div *ngIf="estudianteSeleccionado" class="mt-4">
   <h5>Estudiante: {{ estudianteSeleccionado.nombre_completo }}</h5>
   <p>Curso: {{ estudianteSeleccionado.curso_nombre }} | Modalidad: {{ estudianteSeleccionado.modalidad }}</p>
-
+   
+  <div class="d-flex justify-content-between align-items-center">
+  <h5 class="mb-0">Estudiante: {{ estudianteSeleccionado.nombre_completo }}</h5>
+  <button 
+    class="btn btn-warning btn-sm"
+    (click)="abrirModalNuevaCuota()"
+    [disabled]="!estudianteSeleccionado">
+    <i class="feather icon-plus me-1"></i>
+     Registrar Nueva Cuota
+  </button>
+</div>
   <!-- Tabla de deudas pendientes -->
   <table class="table table-bordered mt-3">
     <thead>
@@ -198,3 +208,80 @@
 <div class="modal-backdrop fade show" 
      *ngIf="mostrarComprobante" 
      (click)="cerrarComprobante()"></div>
+
+     <!-- Modal Nueva Cuota -->
+<div class="modal fade show" *ngIf="modalNuevaCuotaVisible"
+     style="display: block; background: rgba(0,0,0,0.5);" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title">
+           Registrar Nueva Cuota
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModalNuevaCuota()"></button>
+      </div>
+
+      <form [formGroup]="nuevaCuotaForm" (ngSubmit)="registrarNuevaCuota()">
+        <div class="modal-body">
+
+          <!-- Estudiante (solo lectura) -->
+          <div class="alert alert-info py-2 mb-3">
+            <small>
+              <strong>Estudiante:</strong> {{ estudianteSeleccionado?.nombre_completo }}<br>
+              <strong>Curso:</strong> {{ estudianteSeleccionado?.curso_nombre }}
+            </small>
+          </div>
+
+          <!-- Monto -->
+          <div class="mb-3">
+            <label class="form-label">Monto <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" formControlName="monto"
+                   step="0.01" placeholder="0.00" />
+            <div *ngIf="nc['monto'].touched && nc['monto'].invalid" class="text-danger small mt-1">
+              Ingrese un monto válido mayor a 0.
+            </div>
+          </div>
+
+          <!-- Método de Pago -->
+          <div class="mb-3">
+            <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+            <select class="form-control" formControlName="metodo_pago">
+              <option *ngFor="let m of metodosPago" [value]="m.value">{{ m.label }}</option>
+            </select>
+          </div>
+
+          <!-- N° Recibo -->
+          <div class="mb-3">
+            <label class="form-label">N° Recibo <span class="text-muted">(opcional)</span></label>
+            <input type="text" class="form-control" formControlName="numero_recibo"
+                   placeholder="Ej: REC-001" />
+          </div>
+
+          <!-- Fecha y Hora -->
+          <div class="mb-3">
+            <label class="form-label">Fecha y Hora</label>
+            <input type="datetime-local" class="form-control" formControlName="fecha_pago" />
+          </div>
+
+          <!-- Observaciones -->
+          <div class="mb-3">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" formControlName="observaciones" rows="2"
+                      placeholder="Detalle adicional..."></textarea>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary"
+                  (click)="cerrarModalNuevaCuota()">Cancelar</button>
+          <button type="submit" class="btn btn-warning"
+                  [disabled]="registrandoNuevaCuota">
+            {{ registrandoNuevaCuota ? 'Registrando...' : '✅ Registrar Cuota' }}
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>

@@ -110,6 +110,12 @@ export const NavigationItems: NavigationItem[] = [
         children: [
           {
             id: 'button',
+            title: 'Sucursales',
+            type: 'item',
+            url: '/admin/sucursales'
+          },
+          {
+            id: 'button',
             title: 'Cursos',
             type: 'item',
             url: '/admin/cursos'

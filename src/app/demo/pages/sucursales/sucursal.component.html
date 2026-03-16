@@ -1,0 +1,234 @@
+<!-- 🔹 Barra de título y acciones -->
+<div class="row mb-3">
+  <div class="col-xl-12 d-flex justify-content-between align-items-center">
+    <h5> Lista de Sucursales</h5>
+    <div class="d-flex gap-2">
+      <!-- 🔍 Buscador por ciudad -->
+      <div class="input-group" style="width: auto;">
+        <input 
+          type="text" 
+          class="form-control form-control-sm" 
+          placeholder="Buscar por ciudad..." 
+          [(ngModel)]="busqueda"
+          (keyup.enter)="buscarPorCiudad()"
+        />
+        <button class="btn btn-outline-secondary btn-sm" type="button" (click)="buscarPorCiudad()">
+          <i class="fa fa-search"></i>
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" type="button" (click)="limpiarBusqueda()" *ngIf="busqueda">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      
+      <!-- ➕ Botón crear -->
+      <button class="btn btn-primary btn-sm" (click)="abrirModalCrear()">
+        <i class="fa fa-plus"></i> Agregar Sucursal
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 🔹 Tabla de sucursales -->
+<div class="row">
+  <div class="col-xl-12">
+    <app-card [options]="false" blockClass="table-border-style">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Nombre</th>
+              <th>Ciudad</th>
+              <th>Dirección</th>
+              <th>Teléfono</th>
+              <th>Estado</th>
+              <th style="width: 120px;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sucursal of sucursales; let i = index">
+              <th scope="row">{{ i + 1 }}</th>
+              <td class="fw-semibold">{{ sucursal.nombre }}</td>
+              <td>
+                <span class="badge bg-info-subtle text-info-emerge">
+                  {{ sucursal.ciudad }}
+                </span>
+              </td>
+              <td>{{ sucursal.direccion || '—' }}</td>
+              <td>{{ formatoTelefono(sucursal.telefono) }}</td>
+              <td>
+                <span 
+                  class="badge" 
+                  [class.bg-success-subtle]="sucursal.activo"
+                  [class.text-success-emerge]="sucursal.activo"
+                  [class.bg-danger-subtle]="!sucursal.activo"
+                  [class.text-danger-emerge]="!sucursal.activo"
+                >
+                  {{ estadoLabel(sucursal.activo) }}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <button 
+                    class="btn btn-warning" 
+                    (click)="abrirModalEditar(sucursal)"
+                    title="Editar"
+                  >
+                    <i class="fa fa-edit"></i>
+                  </button>
+                  <button 
+                    class="btn btn-danger" 
+                    (click)="eliminarSucursal(sucursal.id)"
+                    title="Desactivar"
+                  >
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            
+            <!-- 📭 Sin resultados -->
+            <tr *ngIf="sucursales.length === 0 && !cargando">
+              <td colspan="7" class="text-center text-muted py-4">
+                <i class="fa fa-building me-2"></i>
+                No hay sucursales registradas.
+              </td>
+            </tr>
+            
+            <!-- ⏳ Cargando -->
+            <tr *ngIf="cargando">
+              <td colspan="7" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+                <div class="mt-2 text-muted">Cargando sucursales...</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+  </div>
+</div>
+
+<!-- 🔹 Modal: Crear / Editar -->
+<div 
+  class="modal fade show" 
+  *ngIf="modalVisible" 
+  style="display: block; background: rgba(0,0,0,0.5);" 
+  tabindex="-1"
+  (click)="cerrarModal()"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editando ? ' Editar Sucursal' : ' Registrar Sucursal' }}
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+      </div>
+      
+      <!-- Body: Formulario -->
+      <div class="modal-body">
+        <form [formGroup]="sucursalForm">
+          
+          <!-- Nombre * -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nombre de la sucursal *</label>
+            <input 
+              formControlName="nombre" 
+              class="form-control" 
+              placeholder="Ej: Sucursal Centro"
+              [class.is-invalid]="f['nombre'].touched && f['nombre'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].errors?.['required']">
+              El nombre es obligatorio
+            </div>
+            <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].errors?.['maxlength']">
+              Máximo 100 caracteres
+            </div>
+          </div>
+
+          <!-- Ciudad * -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Ciudad *</label>
+            <input 
+              formControlName="ciudad" 
+              class="form-control" 
+              placeholder="Ej: CBB, Vinto..."
+              [class.is-invalid]="f['ciudad'].touched && f['ciudad'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['ciudad'].touched && f['ciudad'].errors?.['required']">
+              La ciudad es obligatoria
+            </div>
+            <div class="invalid-feedback" *ngIf="f['ciudad'].touched && f['ciudad'].errors?.['maxlength']">
+              Máximo 100 caracteres
+            </div>
+          </div>
+
+          <!-- Dirección (opcional) -->
+          <div class="mb-3">
+            <label class="form-label">Dirección</label>
+            <input 
+              formControlName="direccion" 
+              class="form-control" 
+              placeholder="Ej: Av. Principal 123"
+              [class.is-invalid]="f['direccion'].touched && f['direccion'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['direccion'].touched && f['direccion'].errors?.['maxlength']">
+              Máximo 255 caracteres
+            </div>
+          </div>
+
+          <!-- Teléfono (opcional) -->
+          <div class="mb-3">
+            <label class="form-label">Teléfono</label>
+            <input 
+              formControlName="telefono" 
+              class="form-control" 
+              placeholder="Ej: +51 987 654 321"
+              [class.is-invalid]="f['telefono'].touched && f['telefono'].invalid"
+            />
+            <div class="invalid-feedback" *ngIf="f['telefono'].touched && f['telefono'].errors?.['maxlength']">
+              Máximo 20 caracteres
+            </div>
+          </div>
+
+          <!-- Estado Activo -->
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input 
+                formControlName="activo" 
+                class="form-check-input" 
+                type="checkbox" 
+                id="activoCheck"
+              />
+              <label class="form-check-label" for="activoCheck">
+                Sucursal activa <small class="text-muted">(visible en el sistema)</small>
+              </label>
+            </div>
+          </div>
+
+        </form>
+      </div>
+      
+      <!-- Footer: Botones -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
+          Cancelar
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="enviarFormulario()"
+          [disabled]="sucursalForm.invalid"
+        >
+          {{ editando ? ' Actualizar' : ' Registrar' }}
+        </button>
+      </div>
+      
+    </div>
+  </div>
+</div>

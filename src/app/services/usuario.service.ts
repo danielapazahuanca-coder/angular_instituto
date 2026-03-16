@@ -11,6 +11,7 @@ export interface Usuario {
   apellido: string;
   email: string;
   rol: 'admin' | 'secretaria'; 
+  sucursal_id: number;
   activo: boolean;
   fecha_creacion: string; 
 }
@@ -22,6 +23,7 @@ export interface CrearUsuarioDTO {
   email: string;
   password: string;
   rol?: 'admin' | 'secretaria'; 
+  sucursal_id: number;
   activo?: boolean; 
 }
 
@@ -31,6 +33,7 @@ export interface ActualizarUsuarioDTO {
   email?: string;
   password?: string; 
   rol?: 'admin' | 'secretaria';
+  sucursal_id: number;
   activo?: boolean;
 }
 

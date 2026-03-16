@@ -26,7 +26,7 @@ const routes: Routes = [
   {
     path: 'admin',
     component: AdminComponent,
-    canActivate: [], // Aún no usamos guard, pero lo dejamos listo
+    canActivate: [],
     children: [
       {
         path: '',
@@ -72,6 +72,12 @@ const routes: Routes = [
        {
         path: 'cursos',
         loadComponent: () => import('./demo/pages/cursos/curso.component').then((c) => c.CursoComponent),
+                canActivate: [AuthGuard],
+        data: { roles: ['admin'] }
+      },
+      {
+        path: 'sucursales',
+        loadComponent: () => import('./demo/pages/sucursales/sucursal.component').then((c) => c.SucursalComponent),
                 canActivate: [AuthGuard],
         data: { roles: ['admin'] }
       },

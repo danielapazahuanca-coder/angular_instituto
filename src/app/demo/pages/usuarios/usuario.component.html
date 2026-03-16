@@ -20,6 +20,7 @@
               <th>Nombre Completo</th>
               <th>Email</th>
               <th>Rol</th>
+              <th>Sucursal</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -30,6 +31,7 @@
               <td>{{ usuario.nombre }} {{ usuario.apellido }}</td>
               <td>{{ usuario.email }}</td>
               <td>{{ usuario.rol === 'admin' ? 'Administrador' : 'Secretaria' }}</td>
+              <td>{{ usuario.sucursal_nombre }}</td>
               <td>
                 <span [class.text-success]="usuario.activo" [class.text-danger]="!usuario.activo">
                   {{ usuario.activo ? 'Activo' : 'Inactivo' }}
@@ -95,6 +97,24 @@
                 <option value="secretaria">Secretaria</option>
               </select>
               <div class="invalid-feedback" *ngIf="f['rol'].touched && f['rol'].invalid">Rol requerido</div>
+            </div>
+          </div>
+          <!-- Campo Sucursal (solo para secretaria) -->
+          <div class="row mb-3" *ngIf="usuarioForm.get('rol')?.value === 'secretaria'">
+            <div class="col-md-12">
+              <label class="form-label">Sucursal *</label>
+              <select 
+                formControlName="sucursal_id" 
+                class="form-select" 
+                [class.is-invalid]="f['sucursal_id'].touched && usuarioForm.errors?.['sucursalRequerida']">
+                <option value="" disabled selected>Seleccione una sucursal</option>
+                <option *ngFor="let sucursal of sucursales" [value]="sucursal.id">
+                  {{ sucursal.nombre }} - {{ sucursal.ciudad }}
+                </option>
+              </select>
+              <div class="invalid-feedback" *ngIf="f['sucursal_id'].touched && usuarioForm.errors?.['sucursalRequerida']">
+                Seleccione una sucursal
+              </div>
             </div>
           </div>
 

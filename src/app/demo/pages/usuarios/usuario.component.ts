@@ -7,6 +7,12 @@ import {
   ActualizarUsuarioDTO
 } from '../../../services/usuario.service';
 import {
+  SucursalService,
+  Sucursal,
+  CrearSucursalDTO,
+  ActualizarSucursalDTO
+} from '../../../services/sucursal.service';
+import {
   FormBuilder,
   ReactiveFormsModule,
   FormGroup,
@@ -26,23 +32,26 @@ export class UsuarioComponent implements OnInit {
   editando = false;
   usuarioActual: Usuario | null = null;
 
+   sucursales: Sucursal[] = [];
   usuarioForm: FormGroup = this.fb.group({
     id: [null],
     nombre: ['', [Validators.required]],
     apellido: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     rol: ['secretaria', [Validators.required]],
+    sucursal_id: [null],
     activo: [true],
     password: ['', []] 
   });
 
   constructor(
     private fb: FormBuilder,
-    private usuarioService: UsuarioService
+    private usuarioService: UsuarioService,private sucursalService: SucursalService
   ) {}
 
   ngOnInit(): void {
     this.cargarUsuarios();
+    this.cargarSucursales();
   }
 
   cargarUsuarios(): void {
@@ -51,6 +60,7 @@ export class UsuarioComponent implements OnInit {
       next: (res) => {
         this.usuarios = res.success ? (res.data as Usuario[]) : [];
         this.cargando = false;
+        console.log('usuarios',this.usuarios);
       },
       error: () => {
         this.cargando = false;
@@ -59,6 +69,20 @@ export class UsuarioComponent implements OnInit {
     });
   }
 
+    cargarSucursales(): void {
+    this.cargando = true;
+    this.sucursalService.getSucursales().subscribe({
+      next: (res) => {
+        this.sucursales = res.success ? (res.data as Sucursal[]) : [];
+        this.cargando = false;
+        console.log('Sucursales',this.sucursales);
+      },
+      error: () => {
+        this.cargando = false;
+        // this.toastr.error('Error al cargar sucursales');
+      }
+    });
+  }
   abrirModalCrear(): void {
     this.editando = false;
     this.usuarioActual = null;
@@ -68,6 +92,7 @@ export class UsuarioComponent implements OnInit {
       apellido: '',
       email: '',
       rol: 'secretaria',
+      sucursal_id: null, 
       activo: true,
       password: ''
     });
@@ -86,6 +111,7 @@ export class UsuarioComponent implements OnInit {
       apellido: usuario.apellido,
       email: usuario.email,
       rol: usuario.rol,
+      sucursal_id: usuario.sucursal_id || null, 
       activo: usuario.activo,
       password: '' 
     });
@@ -96,6 +122,18 @@ export class UsuarioComponent implements OnInit {
   }
 
   enviarFormulario(): void {
+      console.log('🔍 Estado del formulario:', {
+    invalid: this.usuarioForm.invalid,
+    errors: this.usuarioForm.errors,
+    value: this.usuarioForm.value,
+    rol: this.usuarioForm.get('rol')?.value,
+    sucursal_id: this.usuarioForm.get('sucursalId')?.value
+  });
+    if (this.usuarioForm.invalid) {
+    console.log('❌ Formulario inválido');
+    this.usuarioForm.markAllAsTouched();
+    return;
+  }
     if (this.usuarioForm.invalid) {
       this.usuarioForm.markAllAsTouched();
       return;
@@ -109,9 +147,11 @@ export class UsuarioComponent implements OnInit {
         apellido: formValue.apellido,
         email: formValue.email,
         rol: formValue.rol,
+        sucursal_id: formValue.rol === 'secretaria' ? formValue.sucursal_id : null,
         activo: formValue.activo,
         password: formValue.password || undefined 
       };
+      
 
       this.usuarioService.actualizarUsuario(this.usuarioActual.id, datos).subscribe({
         next: () => {
@@ -129,6 +169,7 @@ export class UsuarioComponent implements OnInit {
         apellido: formValue.apellido,
         email: formValue.email,
         rol: formValue.rol,
+        sucursal_id: formValue.rol === 'secretaria' ? formValue.sucursal_id : null,
         password: formValue.password,
         activo: formValue.activo
       };

@@ -11,6 +11,10 @@ import {
   RegistroCompletoDTO,
   EstudianteInscrito,Horario
 } from '../../../services/registro-completo.service';
+import {
+  SucursalService,
+  Sucursal
+} from '../../../services/sucursal.service';
 
 @Component({
   selector: 'app-registro-completo',
@@ -24,6 +28,7 @@ export class RegistroCompletoComponent implements OnInit {
   cursoSeleccionado: Curso | null = null;
    horariosDisponibles: Horario[] = [];
    cursosFiltrados: Curso[] = []; 
+   sucursales: Sucursal[] = [];
      
   modo: 'lista' | 'registro' = 'lista';
   esEdicion = false;
@@ -75,7 +80,7 @@ export class RegistroCompletoComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private registroService: RegistroCompletoService,
+    private registroService: RegistroCompletoService,private sucursalService: SucursalService,
     private router: Router
   ) {
     this.registroForm = this.fb.group({
@@ -108,7 +113,8 @@ export class RegistroCompletoComponent implements OnInit {
       pago_inscripcion: [0],
       metodo_pago: ['efectivo', [Validators.required]],
       numero_recibo: [''],
-      estado: ['activo', [Validators.required]], 
+      estado: [ [Validators.required]], 
+      sucursal_id: null,
       
       observaciones_inscripcion: ['']
     });
@@ -122,7 +128,20 @@ export class RegistroCompletoComponent implements OnInit {
     //this.cargarCursos(); 
     this.limpiarFormulario(); 
   }
-
+   cargarSucursales(): void {
+    this.cargando = true;
+    this.sucursalService.getSucursales().subscribe({
+      next: (res) => {
+        this.sucursales = res.success ? (res.data as Sucursal[]) : [];
+        this.cargando = false;
+        console.log('Sucursales',this.sucursales);
+      },
+      error: () => {
+        this.cargando = false;
+        // this.toastr.error('Error al cargar sucursales');
+      }
+    });
+  }
   volverALista(): void {
     this.esEdicion = false;
     this.estudianteEditando = null;
@@ -215,6 +234,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
     //this.cargarCursos();
     this.configurarCalculosAutomaticos();
     this.cargarEstudiantes();
+    this.cargarSucursales();
 
     this.registroForm.get('tipo_formacion')?.valueChanges.subscribe(() => {
     this.filtrarCursos();
@@ -507,7 +527,7 @@ registrarEstudiante(): void {
       duracion_meses: parseInt(formValue.duracion_meses),
       descuento: parseFloat(formValue.descuento || 0),
       tipo_pago: formValue.tipo_pago,
-      estado: formValue.estado || 'activo',
+      estado: formValue.estado,
       
       pago_inscripcion: parseFloat(formValue.monto_inscripcion),
       metodo_pago: metodoPago,
@@ -570,7 +590,7 @@ actualizarEstudiante(): void {
       duracion_meses: parseInt(formValue.duracion_meses),
       descuento: parseFloat(formValue.descuento || 0),
       tipo_pago: formValue.tipo_pago,
-      estado: formValue.estado || 'activo',
+      estado: formValue.estado ,
       
       observaciones_inscripcion: formValue.observaciones_inscripcion || null,
       usuario_registro_id: null

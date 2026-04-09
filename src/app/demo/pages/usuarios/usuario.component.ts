@@ -8,9 +8,7 @@ import {
 } from '../../../services/usuario.service';
 import {
   SucursalService,
-  Sucursal,
-  CrearSucursalDTO,
-  ActualizarSucursalDTO
+  Sucursal
 } from '../../../services/sucursal.service';
 import {
   FormBuilder,

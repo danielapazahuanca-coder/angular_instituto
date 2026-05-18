@@ -57,7 +57,7 @@ export class RegistroCompletoComponent implements OnInit {
     { value: 'inactivo', label: 'Inactivo', class: 'bg-secondary' },
     { value: 'suspendido', label: 'Suspendido', class: 'bg-warning' },
     { value: 'congelado', label: 'Congelado', class: 'bg-warning' },
-    { value: 'egresado', label: 'Egresado', class: 'bg-info' }
+    { value: 'egresado', label: 'Egresado', class: 'bg-success' }
   ];
 
   metodosPago = [
@@ -102,11 +102,11 @@ export class RegistroCompletoComponent implements OnInit {
       fecha_inicio: ['', [Validators.required]],
       fecha_fin_estimada: [''],
       
-      monto_inscripcion: [50, [Validators.required, Validators.min(0)]],
+      monto_inscripcion: [[Validators.required, Validators.min(0)]],
       monto_reserva: [[Validators.required, Validators.min(0)]],
       monto_mensual: ['', [Validators.required, Validators.min(0)]],
       duracion_meses: ['', [Validators.required, Validators.min(1)]],
-      descuento: [0, [Validators.min(0), Validators.max(100)]],
+      descuento: [0, [Validators.min(0), Validators.max(2000)]],
       tipo_pago: ['mensual', [Validators.required]],
       
       realizaPagoInscripcion: [false],
@@ -193,7 +193,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       telefono: estudiante.telefono || '',
       email: estudiante.email,
       direccion: estudiante.direccion || '',
-      fecha_nacimiento: formatearFecha(estudiante.fecha_nacimiento),
+      fecha_nacimiento: formatearFecha(estudiante.fecha_nacimiento ?? null),
       observaciones_estudiante: estudiante.observaciones_estudiante || '',
       
       curso_id: estudiante.curso_id,
@@ -201,7 +201,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       fecha_inicio: formatearFecha(estudiante.fecha_inicio),
       fecha_fin_estimada: formatearFecha(estudiante.fecha_fin_estimada),
       
-      monto_inscripcion: estudiante.monto_inscripcion || 50,
+      monto_inscripcion: estudiante.monto_inscripcion || 0,
     
       monto_mensual: estudiante.monto_mensual,
       duracion_meses: estudiante.duracion_meses,
@@ -468,7 +468,7 @@ seleccionarHorario(horarioId: number): void {
       ]);
       metodoControl?.setValidators([Validators.required]);
 
-      const montoInscripcion = montoInscripcionCtrl?.value || 50;
+      const montoInscripcion = montoInscripcionCtrl?.value || 0;
       pagoControl?.setValue(montoInscripcion);
     } else {
       pagoControl?.clearValidators();
@@ -504,6 +504,31 @@ registrarEstudiante(): void {
     this.cargando = true;
     const formValue = this.registroForm.value;
 
+        let montoAPagar = 0;
+    
+    if (formValue.tipo_pago === 'total') {
+        // Pago total: suma inscripción + (mensual * duración)
+        const montoInscripcion = parseFloat(formValue.monto_inscripcion) || 0;
+        const montoMensual = parseFloat(formValue.monto_mensual) || 0;
+        const duracion = parseInt(formValue.duracion_meses) || 0;
+        const totalCurso = montoInscripcion + (montoMensual * duracion);
+        const descuento = parseFloat(formValue.descuento) || 0;
+        montoAPagar = totalCurso - descuento;
+        
+        console.log('💰 Pago Total:', {
+            inscripcion: montoInscripcion,
+            mensualidad: montoMensual,
+            duracion: duracion,
+            total: totalCurso,
+            descuento: descuento,
+            aPagar: montoAPagar
+        });
+    } else {
+        // Pago mensual: solo paga inscripción + reserva
+        montoAPagar = (parseFloat(formValue.monto_inscripcion) || 0) + 
+                      (parseFloat(formValue.monto_reserva) || 0);
+    }
+    
     const metodoPago = formValue.metodo_pago || 'efectivo'; 
     const datos: RegistroCompletoDTO = {
       nombre: formValue.nombre,
@@ -529,7 +554,7 @@ registrarEstudiante(): void {
       tipo_pago: formValue.tipo_pago,
       estado: formValue.estado,
       
-      pago_inscripcion: parseFloat(formValue.monto_inscripcion),
+      pago_inscripcion: parseFloat(formValue.pago_inscripcion),
       metodo_pago: metodoPago,
       numero_recibo: formValue.realizaPagoInscripcion && formValue.numero_recibo ? formValue.numero_recibo : null,
       
@@ -672,7 +697,7 @@ getNombreCurso(cursoId: any): string {
 
   limpiarFormulario(): void {
     this.registroForm.reset({
-      monto_inscripcion: 50,
+      monto_inscripcion: 0,
       descuento: 0,
       tipo_pago: 'mensual',
       metodo_pago: 'efectivo',

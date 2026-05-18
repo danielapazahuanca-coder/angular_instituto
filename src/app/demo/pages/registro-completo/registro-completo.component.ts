@@ -503,31 +503,6 @@ seleccionarHorario(horarioId: number): void {
 registrarEstudiante(): void {
     this.cargando = true;
     const formValue = this.registroForm.value;
-
-        let montoAPagar = 0;
-    
-    if (formValue.tipo_pago === 'total') {
-        // Pago total: suma inscripción + (mensual * duración)
-        const montoInscripcion = parseFloat(formValue.monto_inscripcion) || 0;
-        const montoMensual = parseFloat(formValue.monto_mensual) || 0;
-        const duracion = parseInt(formValue.duracion_meses) || 0;
-        const totalCurso = montoInscripcion + (montoMensual * duracion);
-        const descuento = parseFloat(formValue.descuento) || 0;
-        montoAPagar = totalCurso - descuento;
-        
-        console.log('💰 Pago Total:', {
-            inscripcion: montoInscripcion,
-            mensualidad: montoMensual,
-            duracion: duracion,
-            total: totalCurso,
-            descuento: descuento,
-            aPagar: montoAPagar
-        });
-    } else {
-        // Pago mensual: solo paga inscripción + reserva
-        montoAPagar = (parseFloat(formValue.monto_inscripcion) || 0) + 
-                      (parseFloat(formValue.monto_reserva) || 0);
-    }
     
     const metodoPago = formValue.metodo_pago || 'efectivo'; 
     const datos: RegistroCompletoDTO = {

@@ -121,13 +121,43 @@ export class RegistroCompletoComponent implements OnInit {
   }
 
 
-  irANuevoRegistro(): void {
-    this.esEdicion = false;
-    this.estudianteEditando = null;
-    this.modo = 'registro';
-    //this.cargarCursos(); 
-    this.limpiarFormulario(); 
+// components/registro-completo/registro-completo.component.ts
+
+irANuevoRegistro(): void {
+  this.esEdicion = false;
+  this.estudianteEditando = null;
+  this.modo = 'registro';
+  this.limpiarFormulario(); 
+  
+  // IMPORTANTE: Resetear los filtros de cursos para que se muestren correctamente
+  this.cursosFiltrados = [];
+  this.cursoSeleccionado = null;
+  this.horariosDisponibles = [];
+  
+  // Resetear el formulario a valores por defecto
+  this.registroForm.patchValue({
+    tipo_formacion: null,
+    curso_id: null,
+    horario_id: null,
+    fecha_inicio: null,
+    fecha_fin_estimada: null,
+    monto_inscripcion: 0,
+    monto_reserva: 0,
+    monto_mensual: 0,
+    duracion_meses: 1,
+    descuento: 0,
+    tipo_pago: 'mensual',
+    metodo_pago: 'efectivo',
+    estado: 'activo'
+  });
+  
+  // Asegurar que los cursos están cargados
+  if (this.cursos.length === 0) {
+    this.cargarCursosConHorarios();
   }
+  
+  console.log('🔵 Modo registro activado');
+}
    cargarSucursales(): void {
     this.cargando = true;
     this.sucursalService.getSucursales().subscribe({
@@ -345,6 +375,11 @@ formatoDuracion(meses: number): string {
     this.registroForm.get('duracion_meses')?.valueChanges.subscribe(() => this.calcularMontos());
     this.registroForm.get('descuento')?.valueChanges.subscribe(() => this.calcularMontos());
     this.registroForm.get('pago_inscripcion')?.valueChanges.subscribe(() => this.calcularMontos());
+    this.registroForm.get('monto_reserva')?.valueChanges.subscribe(() => this.calcularMontos());
+
+    this.registroForm.get('tipo_pago')?.valueChanges.subscribe((tipo) => {
+      this.onTipoPagoChange(tipo);
+    });
     
     this.registroForm.get('curso_id')?.valueChanges.subscribe((cursoId) => {
       this.onCursoChange(cursoId);
@@ -358,6 +393,19 @@ formatoDuracion(meses: number): string {
       this.onRealizaPagoChange(realiza);
     });
   }
+  onTipoPagoChange(tipo: string): void {
+  const reservaControl = this.registroForm.get('monto_reserva');
+
+  if (tipo === 'total') {
+    reservaControl?.clearValidators();
+    reservaControl?.setValue(0, { emitEvent: false });
+  } else {
+    reservaControl?.setValidators([Validators.required, Validators.min(0)]);
+  }
+
+  reservaControl?.updateValueAndValidity({ emitEvent: false });
+  this.calcularMontos();
+}
     trackByHorario(index: number, horario: Horario): number {
     return horario.id;
   }
@@ -425,28 +473,30 @@ seleccionarHorario(horarioId: number): void {
     }
   }
 
-    calcularMontos(): void {
-      const montoInscripcion = parseFloat(this.registroForm.get('monto_inscripcion')?.value) || 0;
-      const montoMensual = parseFloat(this.registroForm.get('monto_mensual')?.value) || 0;
-      const duracionMeses = parseInt(this.registroForm.get('duracion_meses')?.value) || 0;
-      
-      const descuento = parseFloat(this.registroForm.get('descuento')?.value) || 0;
-      
-      const pagoInscripcion = parseFloat(this.registroForm.get('pago_inscripcion')?.value) || 0;
-      
-      this.subtotal = montoInscripcion + (montoMensual * duracionMeses);
-      
+calcularMontos(): void {
+  const tipoPago = this.registroForm.get('tipo_pago')?.value;
+  const montoInscripcion = parseFloat(this.registroForm.get('monto_inscripcion')?.value) || 0;
+  const montoMensual = parseFloat(this.registroForm.get('monto_mensual')?.value) || 0;
+  const duracionMeses = parseInt(this.registroForm.get('duracion_meses')?.value) || 0;
+  const descuento = parseFloat(this.registroForm.get('descuento')?.value) || 0;
+  const montoReserva = parseFloat(this.registroForm.get('monto_reserva')?.value) || 0;
+  const pagoInscripcion = parseFloat(this.registroForm.get('pago_inscripcion')?.value) || 0;
 
-      this.montoDescuento = descuento; 
-      
+  if (tipoPago === 'total') {
+    // Pago único: se paga todo el curso de una vez, no aplica reserva
+    this.subtotal = montoInscripcion + (montoMensual * duracionMeses);
+    this.montoDescuento = Math.min(descuento, this.subtotal);
+    this.montoTotal = this.subtotal - this.montoDescuento;
+  } else {
+    // Pago mensual: matrícula + primera cuota, restando reserva y descuento
+    this.subtotal = montoInscripcion + montoMensual;
+    this.montoDescuento = Math.min(descuento, this.subtotal);
+    const totalARestar = this.montoDescuento + montoReserva;
+    this.montoTotal = Math.max(this.subtotal - totalARestar, 0);
+  }
 
-      if (this.montoDescuento > this.subtotal) {
-          this.montoDescuento = this.subtotal;
-      }
-
-      this.montoTotal = this.subtotal - this.montoDescuento;
-      this.saldoPendiente = this.montoTotal - pagoInscripcion;
-    }
+  this.saldoPendiente = this.montoTotal - pagoInscripcion;
+}
   onRealizaPagoChange(realiza: boolean): void {
     const pagoControl = this.registroForm.get('pago_inscripcion');
     const metodoControl = this.registroForm.get('metodo_pago');

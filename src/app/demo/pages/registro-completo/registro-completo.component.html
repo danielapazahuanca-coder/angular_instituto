@@ -528,56 +528,36 @@
         </div>
       </div>
 
-      <!-- FILA 4: Montos -->
-      <div class="row">
-        <div class="col-md-4">
-          <label class="form-label">Monto Mensual (Bs.) <span class="text-danger">*</span></label>
-          <input 
-            formControlName="monto_mensual" 
-            type="number" 
-            step="0.01" 
-            class="form-control" 
-            [class.is-invalid]="f['monto_mensual'].touched && f['monto_mensual'].invalid"
-            min="0"
-            readonly
-          />
-          <div class="invalid-feedback" *ngIf="f['monto_mensual'].touched && f['monto_mensual'].invalid">
-            El monto mensual es requerido
-          </div>
-        </div>
-        
-        <div class="col-md-4">
-          <label class="form-label">Pago Matricula (Bs.) <span class="text-danger">*</span></label>
-          <input 
-            formControlName="monto_inscripcion" 
-            type="number" 
-            step="0.01" 
-            class="form-control" 
-            [class.is-invalid]="f['monto_inscripcion'].touched && f['monto_inscripcion'].invalid"
-            min="0"
-          />
-          <div class="invalid-feedback" *ngIf="f['monto_inscripcion'].touched && f['monto_inscripcion'].invalid">
-            El monto de inscripción es requerido
-          </div>
-        </div>
-                <div class="col-md-4">
-          <label class="form-label">Pago Reserva (Bs.) <span class="text-danger">*</span></label>
-          <input 
-            formControlName="monto_reserva" 
-            type="number" 
-            step="0.01" 
-            class="form-control"
-            min="0"
-          />
+    </app-card>
+  </div>
+</div>
 
+<!-- SECCIÓN 3: DATOS DE PAGO -->
+<div class="row mt-3">
+  <div class="col-xl-12">
+    <app-card cardTitle="Datos de Pago" [options]="false">
+
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label class="form-label">Tipo de Pago <span class="text-danger">*</span></label>
+          <select formControlName="tipo_pago" class="form-select">
+            <option *ngFor="let tipo of tiposPago" [value]="tipo.value">
+              {{ tipo.label }}
+            </option>
+          </select>
+          <small class="text-muted" *ngIf="f['tipo_pago'].value === 'total'">
+            El estudiante pagará todo el curso de una vez
+          </small>
+          <small class="text-muted" *ngIf="f['tipo_pago'].value === 'mensual'">
+            Se generarán cobros mensuales
+          </small>
         </div>
 
-        <!-- Espacio vacío si moviste Método de Pago arriba -->
-        <div class="col-md-4" *ngIf="!cursoSeleccionado">
+        <div class="col-md-4">
           <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
-          <select 
-            formControlName="metodo_pago" 
-            class="form-select" 
+          <select
+            formControlName="metodo_pago"
+            class="form-select"
             [class.is-invalid]="f['metodo_pago'].touched && f['metodo_pago'].invalid"
           >
             <option [ngValue]="null">-- Seleccionar --</option>
@@ -589,86 +569,132 @@
             Debe seleccionar un método de pago
           </div>
         </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Pago Matrícula (Bs.) <span class="text-danger">*</span></label>
+          <input
+            formControlName="monto_inscripcion"
+            type="number"
+            step="0.01"
+            class="form-control"
+            [class.is-invalid]="f['monto_inscripcion'].touched && f['monto_inscripcion'].invalid"
+            min="0"
+          />
+          <div class="invalid-feedback" *ngIf="f['monto_inscripcion'].touched && f['monto_inscripcion'].invalid">
+            El monto de matrícula es requerido
+          </div>
+        </div>
+      </div>
+
+      <!-- CASO: PAGO TOTAL -->
+      <div class="row mb-3" *ngIf="f['tipo_pago'].value === 'total'">
+        <div class="col-md-4">
+          <label class="form-label">Monto Total del Curso (Bs.)</label>
+          <input [value]="subtotal.toFixed(2)" type="text" class="form-control" readonly />
+          <small class="text-muted">Matrícula + costo total del curso</small>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Descuento (Bs)</label>
+          <input
+            formControlName="descuento"
+            type="number"
+            step="0.01"
+            class="form-control"
+            min="0"
+            placeholder="0"
+          />
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end">
+          <div class="alert alert-primary w-100 mb-0 py-2">
+            <strong>Total a Pagar:</strong> Bs. {{ montoTotal.toFixed(2) }}
+          </div>
+        </div>
+      </div>
+
+      <!-- CASO: PAGO MENSUAL -->
+      <div class="row mb-3" *ngIf="f['tipo_pago'].value === 'mensual'">
+        <div class="col-md-3">
+          <label class="form-label">Monto Mensual (Bs.) <span class="text-danger">*</span></label>
+          <input
+            formControlName="monto_mensual"
+            type="number"
+            step="0.01"
+            class="form-control"
+            [class.is-invalid]="f['monto_mensual'].touched && f['monto_mensual'].invalid"
+            min="0"
+            readonly
+          />
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Pago Reserva (Bs.)</label>
+          <input formControlName="monto_reserva" type="number" step="0.01" class="form-control" min="0" />
+          <small class="text-muted">Se resta del monto a pagar</small>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Descuento (Bs)</label>
+          <input
+            formControlName="descuento"
+            type="number"
+            step="0.01"
+            class="form-control"
+            min="0"
+            placeholder="0"
+          />
+          <small class="text-muted">Se resta del monto a pagar</small>
+        </div>
+
+        <div class="col-md-3 d-flex align-items-end">
+          <div class="alert alert-primary w-100 mb-0 py-2">
+            <strong>Monto Mensual a Pagar:</strong><br />Bs. {{ montoTotal.toFixed(2) }}
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-12">
+          <label class="form-label">Observaciones</label>
+          <textarea
+            formControlName="observaciones_inscripcion"
+            class="form-control"
+            rows="2"
+            placeholder="Detalles adicionales sobre el pago o inscripción"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col-12">
+          <div class="alert alert-info">
+            <h6 class="mb-2">Resumen:</h6>
+            <div class="row">
+              <div class="col-md-3">
+                <strong>Subtotal:</strong><br />
+                Bs. {{ subtotal.toFixed(2) }}
+              </div>
+              <div class="col-md-3">
+                <strong>Descuento:</strong><br />
+                <span class="text-success">- Bs. {{ montoDescuento.toFixed(2) }}</span>
+              </div>
+              <div class="col-md-3" *ngIf="f['tipo_pago'].value === 'mensual'">
+                <strong>Reserva:</strong><br />
+                <span class="text-success">- Bs. {{ (f['monto_reserva'].value || 0) | number:'1.2-2' }}</span>
+              </div>
+              <div class="col-md-3">
+                <strong>{{ f['tipo_pago'].value === 'total' ? 'Total a Pagar' : 'Monto a Pagar' }}:</strong><br />
+                <span class="text-primary">Bs. {{ montoTotal.toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
     </app-card>
   </div>
 </div>
-
-  <!-- SECCIÓN 3: CUOTA -->
-  <div class="row mt-3">
-    <div class="col-xl-12">
-      <app-card cardTitle="Cuota" [options]="false">
-        <div class="row mb-3">
-          <div class="col-md-3">
-            <label class="form-label">Tipo de Pago <span class="text-danger">*</span></label>
-            <select formControlName="tipo_pago" class="form-select">
-              <option *ngFor="let tipo of tiposPago" [value]="tipo.value">
-                {{ tipo.label }}
-              </option>
-            </select>
-            <small class="text-muted" *ngIf="f['tipo_pago'].value === 'total'">
-              El estudiante pagará todo el curso de una vez
-            </small>
-            <small class="text-muted" *ngIf="f['tipo_pago'].value === 'mensual'">
-              Se generarán cobros mensuales
-            </small>
-          </div>
-          
-          <div class="col-md-3">
-            <label class="form-label">Descuento (Bs)</label>
-            <input 
-              formControlName="descuento" 
-              type="number" 
-              step="0.00" 
-              class="form-control"
-              min="0"
-              placeholder="0"
-            />
-            <small class="text-muted">Descuento sobre el total</small>
-          </div>
-          
-          <div class="col-md-6">
-            <label class="form-label">Observaciones</label>
-            <textarea 
-              formControlName="observaciones_inscripcion" 
-              class="form-control" 
-              rows="2"
-              placeholder="Detalles adicionales sobre el pago o inscripción"
-            ></textarea>
-          </div>
-        </div>
-
-        <!-- Resumen de Montos -->
-        <div class="row">
-          <div class="col-12">
-            <div class="alert alert-info">
-              <h6 class="mb-2">Resumen de Cuota:</h6>
-              <div class="row">
-                <div class="col-md-3">
-                  <strong>Subtotal:</strong><br>
-                  Bs. {{ subtotal.toFixed(2) }}
-                </div>
-                <div class="col-md-3">
-                 
-                  <strong>Descuento (Bs.):</strong><br>
-                  <span class="text-success">- Bs. {{ montoDescuento.toFixed(2) }}</span>
-                </div>
-                <div class="col-md-3">
-                  <strong>Monto Total:</strong><br>
-                  <span class="text-primary">Bs. {{ montoTotal.toFixed(2) }}</span>
-                </div>
-                <div class="col-md-3">
-                  <strong>Saldo Pendiente:</strong><br>
-                  <span class="text-danger">Bs. {{ saldoPendiente.toFixed(2) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </app-card>
-    </div>
-  </div>
 
   <!-- BOTONES -->
   <div class="row mt-3">

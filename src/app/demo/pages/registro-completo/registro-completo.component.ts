@@ -46,7 +46,8 @@ export class RegistroCompletoComponent implements OnInit {
   filtroHorarioId: number | null = null;
   filtroNombre: string = '';
   filtroCI: string = '';
-  
+  itemsPorSeccion = 5;
+  seccionActual = 1;
   subtotal = 0;
   montoDescuento = 0;
   montoTotal = 0;
@@ -103,7 +104,7 @@ export class RegistroCompletoComponent implements OnInit {
       fecha_fin_estimada: [''],
       
       monto_inscripcion: [[Validators.required, Validators.min(0)]],
-      monto_reserva: [[Validators.required, Validators.min(0)]],
+      monto_reserva: [0, [Validators.required, Validators.min(0)]],
       monto_mensual: ['', [Validators.required, Validators.min(0)]],
       duracion_meses: ['', [Validators.required, Validators.min(1)]],
       descuento: [0, [Validators.min(0), Validators.max(2000)]],
@@ -232,7 +233,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       fecha_fin_estimada: formatearFecha(estudiante.fecha_fin_estimada),
       
       monto_inscripcion: estudiante.monto_inscripcion || 0,
-    
+      monto_reserva : estudiante.monto_reserva || 0,
       monto_mensual: estudiante.monto_mensual,
       duracion_meses: estudiante.duracion_meses,
       descuento: estudiante.descuento || 0,
@@ -241,7 +242,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       
       observaciones_inscripcion: estudiante.observaciones_inscripcion || ''
     });
-    console.log('Estudiantes:', this.registroForm);
+    console.log('Estudiantes Datos:', this.registroForm);
 
   const cursoCargado = this.cursos.find(c => c.id === estudiante.curso_id);
   if (cursoCargado) {
@@ -307,6 +308,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
 
       return cumpleFiltros;
     });
+    this.seccionActual = 1;
   }
 
 
@@ -489,7 +491,7 @@ calcularMontos(): void {
     this.montoTotal = this.subtotal - this.montoDescuento;
   } else {
     // Pago mensual: matrícula + primera cuota, restando reserva y descuento
-    this.subtotal = montoInscripcion + montoMensual;
+    this.subtotal =  montoMensual;
     this.montoDescuento = Math.min(descuento, this.subtotal);
     const totalARestar = this.montoDescuento + montoReserva;
     this.montoTotal = Math.max(this.subtotal - totalARestar, 0);
@@ -677,7 +679,7 @@ cargarEstudiantes(): void {
           horario_turno: est.turno,        
           horario_dias: est.dias_semana  
         }));
-        console.log('Estudiantes:', this.estudiantesInscritos);
+        console.log('Estudiantesss:', this.estudiantesInscritos);
         this.aplicarFiltros();
       } else {
         this.estudiantesInscritos = [];
@@ -847,4 +849,32 @@ cerrarComprobante(): void {
   this.mostrarComprobante = false;
   this.comprobanteDatos = null;
 }
+
+get estudiantesSeccion(): EstudianteInscrito[] {
+    const inicio = (this.seccionActual - 1) * this.itemsPorSeccion;
+    const fin = inicio + this.itemsPorSeccion;
+    return this.estudiantesFiltrados.slice(inicio, fin);
+  }
+
+  get totalSecciones(): number {
+    return Math.ceil(this.estudiantesFiltrados.length / this.itemsPorSeccion);
+  }
+
+  get seccionesDisponibles(): number[] {
+    return Array.from({ length: this.totalSecciones }, (_, i) => i + 1);
+  }
+
+  irASeccion(num: number): void {
+    if (num >= 1 && num <= this.totalSecciones) {
+      this.seccionActual = num;
+    }
+  }
+
+  seccionAnterior(): void {
+    if (this.seccionActual > 1) this.seccionActual--;
+  }
+
+  seccionSiguiente(): void {
+    if (this.seccionActual < this.totalSecciones) this.seccionActual++;
+  }
 }

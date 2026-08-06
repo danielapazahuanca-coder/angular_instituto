@@ -1,10 +1,17 @@
-<!-- Botón principal -->
-<div class="row mb-3">
+<!-- Botón principal - Solo visible para admin -->
+<div class="row mb-3" *ngIf="rolUsuario === 'admin'">
   <div class="col-xl-12 d-flex justify-content-between align-items-center">
     <h5>Lista de Usuarios</h5>
     <button class="btn btn-primary" (click)="abrirModalCrear()">
       <i class="fa fa-plus"></i> Agregar Usuario
     </button>
+  </div>
+</div>
+
+<!-- Título para secretaria -->
+<div class="row mb-3" *ngIf="rolUsuario === 'secretaria'">
+  <div class="col-xl-12">
+    <h5>Mi Perfil</h5>
   </div>
 </div>
 
@@ -38,19 +45,28 @@
                 </span>
               </td>
               <td>
-                <button class="btn btn-sm btn-warning me-1" (click)="abrirModalEditar(usuario)">
+                <!-- Botón Editar - Condicional según permisos -->
+                <button 
+                  *ngIf="puedeEditar(usuario)" 
+                  class="btn btn-sm btn-warning me-1" 
+                  (click)="abrirModalEditar(usuario)">
                   <i class="fa fa-edit"></i>
                 </button>
-                <button class="btn btn-sm btn-danger" (click)="eliminarUsuario(usuario.id!)">
+                
+                <!-- Botón Eliminar - Solo admin -->
+                <button 
+                  *ngIf="puedeEliminar(usuario)" 
+                  class="btn btn-sm btn-danger" 
+                  (click)="eliminarUsuario(usuario.id!)">
                   <i class="fa fa-trash"></i>
                 </button>
               </td>
             </tr>
             <tr *ngIf="usuarios.length === 0 && !cargando">
-              <td colspan="6" class="text-center">No hay usuarios.</td>
+              <td colspan="7" class="text-center">No hay usuarios.</td>
             </tr>
             <tr *ngIf="cargando">
-              <td colspan="6" class="text-center">Cargando...</td>
+              <td colspan="7" class="text-center">Cargando...</td>
             </tr>
           </tbody>
         </table>
@@ -74,31 +90,44 @@
           <div class="row mb-3">
             <div class="col-md-6">
               <label class="form-label">Nombre *</label>
-              <input formControlName="nombre" class="form-control" [class.is-invalid]="f['nombre'].touched && f['nombre'].invalid" />
-              <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].invalid">Nombre requerido</div>
+              <input formControlName="nombre" class="form-control" 
+                [class.is-invalid]="f['nombre'].touched && f['nombre'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['nombre'].touched && f['nombre'].invalid">
+                Nombre requerido
+              </div>
             </div>
             <div class="col-md-6">
               <label class="form-label">Apellido *</label>
-              <input formControlName="apellido" class="form-control" [class.is-invalid]="f['apellido'].touched && f['apellido'].invalid" />
-              <div class="invalid-feedback" *ngIf="f['apellido'].touched && f['apellido'].invalid">Apellido requerido</div>
+              <input formControlName="apellido" class="form-control" 
+                [class.is-invalid]="f['apellido'].touched && f['apellido'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['apellido'].touched && f['apellido'].invalid">
+                Apellido requerido
+              </div>
             </div>
           </div>
 
           <div class="row mb-3">
             <div class="col-md-6">
               <label class="form-label">Email *</label>
-              <input formControlName="email" type="email" class="form-control" [class.is-invalid]="f['email'].touched && f['email'].invalid" />
-              <div class="invalid-feedback" *ngIf="f['email'].touched && f['email'].invalid">Email válido requerido</div>
+              <input formControlName="email" type="email" class="form-control" 
+                [class.is-invalid]="f['email'].touched && f['email'].invalid" />
+              <div class="invalid-feedback" *ngIf="f['email'].touched && f['email'].invalid">
+                Email válido requerido
+              </div>
             </div>
             <div class="col-md-6">
               <label class="form-label">Rol *</label>
-              <select formControlName="rol" class="form-select" [class.is-invalid]="f['rol'].touched && f['rol'].invalid">
+              <select formControlName="rol" class="form-select" 
+                [class.is-invalid]="f['rol'].touched && f['rol'].invalid">
                 <option value="admin">Administrador</option>
                 <option value="secretaria">Secretaria</option>
               </select>
-              <div class="invalid-feedback" *ngIf="f['rol'].touched && f['rol'].invalid">Rol requerido</div>
+              <div class="invalid-feedback" *ngIf="f['rol'].touched && f['rol'].invalid">
+                Rol requerido
+              </div>
             </div>
           </div>
+
           <!-- Campo Sucursal (solo para secretaria) -->
           <div class="row mb-3" *ngIf="usuarioForm.get('rol')?.value === 'secretaria'">
             <div class="col-md-12">
@@ -129,20 +158,41 @@
             </div>
           </div>
 
-          <div class="row mb-3" *ngIf="editando">
+          <!-- Mensaje informativo para secretaria editando su perfil -->
+          <div class="row mb-3" *ngIf="editando && rolUsuario === 'secretaria'">
             <div class="col-md-12">
-              <label class="form-label">Nueva contraseña (opcional)</label>
-              <input formControlName="password" type="password" class="form-control" />
+              <div class="alert alert-info">
+                <i class="fa fa-info-circle"></i> 
+                Como secretaria, solo puedes cambiar tu contraseña. Los demás campos están bloqueados.
+              </div>
             </div>
           </div>
 
-          <div class="row mb-3">
+          <div class="row mb-3" *ngIf="editando">
+            <div class="col-md-12">
+              <label class="form-label">
+                {{ rolUsuario === 'secretaria' ? 'Nueva Contraseña *' : 'Nueva contraseña (opcional)' }}
+              </label>
+              <input formControlName="password" type="password" class="form-control" 
+                [class.is-invalid]="f['password'].touched && f['password'].invalid && rolUsuario === 'secretaria'" />
+              <div class="invalid-feedback" *ngIf="f['password'].touched && f['password'].invalid && rolUsuario === 'secretaria'">
+                Debes ingresar una nueva contraseña
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-3" *ngIf="rolUsuario === 'admin'">
             <div class="col-md-12">
               <div class="form-check">
                 <input formControlName="activo" type="checkbox" class="form-check-input" id="activoCheck" />
                 <label class="form-check-label" for="activoCheck">Usuario activo</label>
               </div>
             </div>
+          </div>
+
+          <!-- Campo oculto para secretaria (activo siempre true) -->
+          <div *ngIf="rolUsuario === 'secretaria'">
+            <input formControlName="activo" type="hidden" value="true" />
           </div>
         </form>
       </div>

@@ -51,9 +51,7 @@ const routes: Routes = [
       },
       {
         path: 'usuarios',
-        loadComponent: () => import('./demo/pages/usuarios/usuario.component')  .then((c) => c.UsuarioComponent),
-        canActivate: [AuthGuard],
-        data: { roles: ['admin'] }
+        loadComponent: () => import('./demo/pages/usuarios/usuario.component')  .then((c) => c.UsuarioComponent)
       },
      {
         path: 'modalidades',

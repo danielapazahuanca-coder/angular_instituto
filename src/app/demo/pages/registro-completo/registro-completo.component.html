@@ -292,20 +292,24 @@
             </div>
           </div>
               <div class="col-md-4">
-              <label class="form-label">Sucursal <span class="text-danger">*</span></label>
-              <select 
-                formControlName="sucursal_id" 
-                class="form-select" 
-                [class.is-invalid]="f['sucursal_id'].touched && usuarioForm.errors?.['sucursalRequerida']">
-                <option value="" disabled selected>Seleccione una sucursal</option>
-                <option *ngFor="let sucursal of sucursales" [value]="sucursal.id">
-                  {{ sucursal.nombre }} - {{ sucursal.ciudad }}
-                </option>
-              </select>
-              <div class="invalid-feedback" *ngIf="f['sucursal_id'].touched && usuarioForm.errors?.['sucursalRequerida']">
-                Seleccione una sucursal
+                <label class="form-label">
+                  Sucursal <span class="text-danger" *ngIf="rolUsuario === 'admin'">*</span>
+                </label>
+                <select 
+                  formControlName="sucursal_id" 
+                  class="form-select">
+                  <option value="" disabled selected>Seleccione una sucursal</option>
+                  <option *ngFor="let sucursal of sucursales" [value]="sucursal.id">
+                    {{ sucursal.nombre }} - {{ sucursal.ciudad }}
+                  </option>
+                </select>
+                <small class="text-muted" *ngIf="rolUsuario === 'secretaria'">
+                  <i class="fa fa-lock me-1"></i> Se asigna automáticamente su sucursal
+                </small>
+                <div class="invalid-feedback" *ngIf="f['sucursal_id'].touched && f['sucursal_id'].invalid">
+                  Seleccione una sucursal
+                </div>
               </div>
-            </div>
           
           <!-- Badge visual del estado actual (solo en edición) -->
           <div class="col-md-8 d-flex align-items-end">

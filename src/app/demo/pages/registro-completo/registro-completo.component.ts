@@ -14,6 +14,7 @@ import {
   SucursalService,
   Sucursal
 } from '../../../services/sucursal.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-registro-completo',
@@ -57,6 +58,11 @@ export class RegistroCompletoComponent implements OnInit {
   mensajeExito: string = '';
   mostrarBotonComprobante: boolean = false;
 
+  usuarioActual: any = null;
+  sucursalUsuario: number | null = null;
+  rolUsuario: string | null = null;
+  usuarioIdActual: number | null = null;
+
   estadosEstudiante = [
     { value: 'activo', label: 'Activo', class: 'bg-success' },
     { value: 'inactivo', label: 'Inactivo', class: 'bg-secondary' },
@@ -86,7 +92,8 @@ export class RegistroCompletoComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private registroService: RegistroCompletoService,private sucursalService: SucursalService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
   ) {
     this.registroForm = this.fb.group({
 
@@ -151,7 +158,7 @@ irANuevoRegistro(): void {
     metodo_pago: 'efectivo',
     estado: 'activo'
   });
-  
+  this.configurarSucursalPorRol(); 
   if (this.cursos.length === 0) {
     this.cargarCursosConHorarios();
   }
@@ -238,6 +245,7 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
       descuento: estudiante.descuento || 0,
       tipo_pago: estudiante.tipo_pago || 'mensual',
       estado: estudiante.estado,
+      sucursal_id: estudiante.sucursal_id || null,
       
       observaciones_inscripcion: estudiante.observaciones_inscripcion || ''
     });
@@ -256,15 +264,28 @@ cargarDatosEstudiante(estudiante: EstudianteInscrito): void {
     setTimeout(() => {
       this.onCursoChange(estudiante.curso_id);
       this.calcularMontos();
+      this.configurarSucursalPorRol(); 
     }, 100);
   }
 
   ngOnInit(): void {
+        const user = this.authService.getCurrentUser();
+    if (user) {
+      this.usuarioActual = user;
+      this.usuarioIdActual = user.id;
+      this.sucursalUsuario = user.sucursal_id;
+      this.rolUsuario = user.rol;
+      
+      console.log('📝 ID del usuario logueado:', this.usuarioIdActual);
+      console.log('🏢 ID de la sucursal del usuario logueado:', this.sucursalUsuario);
+      console.log('👤 Rol del usuario logueado:', this.rolUsuario);
+    }
     this.cargarCursosConHorarios();
     //this.cargarCursos();
     this.configurarCalculosAutomaticos();
     this.cargarEstudiantes();
     this.cargarSucursales();
+    this.configurarSucursalPorRol(); 
 
     this.registroForm.get('tipo_formacion')?.valueChanges.subscribe(() => {
     this.filtrarCursos();
@@ -553,7 +574,7 @@ calcularMontos(): void {
 
 registrarEstudiante(): void {
     this.cargando = true;
-    const formValue = this.registroForm.value;
+    const formValue = this.registroForm.getRawValue();
     
     const metodoPago = formValue.metodo_pago || 'efectivo'; 
     const datos: RegistroCompletoDTO = {
@@ -585,7 +606,10 @@ registrarEstudiante(): void {
       numero_recibo: formValue.realizaPagoInscripcion && formValue.numero_recibo ? formValue.numero_recibo : null,
       
       observaciones_inscripcion: formValue.observaciones_inscripcion || null,
-      usuario_registro_id: null
+      usuario_registro_id: this.usuarioIdActual,
+      sucursal_id: this.rolUsuario === 'secretaria' 
+      ? this.sucursalUsuario 
+      : parseInt(formValue.sucursal_id),
     };
     
     console.log('🔍 Datos que se enviarán al backend:', datos);
@@ -617,7 +641,7 @@ registrarEstudiante(): void {
 actualizarEstudiante(): void {
     if (!this.estudianteEditando) return;
 
-    const formValue = this.registroForm.value;
+     const formValue = this.registroForm.getRawValue();
     
     const datos: RegistroCompletoDTO = {
       nombre: formValue.nombre,
@@ -644,7 +668,10 @@ actualizarEstudiante(): void {
       estado: formValue.estado ,
       
       observaciones_inscripcion: formValue.observaciones_inscripcion || null,
-      usuario_registro_id: null
+      usuario_registro_id: this.usuarioIdActual,
+      sucursal_id: this.rolUsuario === 'secretaria' 
+      ? this.sucursalUsuario 
+      : parseInt(formValue.sucursal_id),
     };
     
     this.cargando = true;
@@ -919,5 +946,23 @@ cerrarModalExito(): void {
 verComprobanteDesdeExito(): void {
   this.mostrarModalExito = false;
   this.mostrarComprobante = true;
+}
+configurarSucursalPorRol(): void {
+  const sucursalControl = this.registroForm.get('sucursal_id');
+  if (!sucursalControl) return;
+
+  if (this.rolUsuario === 'admin') {
+    sucursalControl.setValidators([Validators.required]);
+    sucursalControl.enable({ emitEvent: false });
+    if (!this.esEdicion) {
+      sucursalControl.setValue(null, { emitEvent: false });
+    }
+  } else if (this.rolUsuario === 'secretaria') {
+    sucursalControl.clearValidators();
+    sucursalControl.setValue(this.sucursalUsuario, { emitEvent: false });
+    sucursalControl.disable({ emitEvent: false });
+  }
+
+  sucursalControl.updateValueAndValidity({ emitEvent: false });
 }
 }

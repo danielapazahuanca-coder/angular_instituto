@@ -16,6 +16,7 @@ import {
   FormGroup,
   Validators
 } from '@angular/forms';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-tbl-bootstrap',
@@ -28,9 +29,12 @@ export class UsuarioComponent implements OnInit {
   cargando = false;
   modalVisible = false;
   editando = false;
-  usuarioActual: Usuario | null = null;
+  usuarioActual: any = null;
+  sucursalUsuario: number | null = null;
+  rolUsuario: string | null = null;
+  usuarioIdActual: number | null = null;
 
-   sucursales: Sucursal[] = [];
+  sucursales: Sucursal[] = [];
   usuarioForm: FormGroup = this.fb.group({
     id: [null],
     nombre: ['', [Validators.required]],
@@ -44,10 +48,24 @@ export class UsuarioComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private usuarioService: UsuarioService,private sucursalService: SucursalService
+    private usuarioService: UsuarioService,
+    private sucursalService: SucursalService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.usuarioActual = user;
+      this.usuarioIdActual = user.id;
+      this.sucursalUsuario = user.sucursal_id;
+      this.rolUsuario = user.rol;
+      
+      console.log('📝 ID del usuario logueado:', this.usuarioIdActual);
+      console.log('🏢 ID de la sucursal del usuario logueado:', this.sucursalUsuario);
+      console.log('👤 Rol del usuario logueado:', this.rolUsuario);
+    }
+    
     this.cargarUsuarios();
     this.cargarSucursales();
   }
@@ -56,32 +74,62 @@ export class UsuarioComponent implements OnInit {
     this.cargando = true;
     this.usuarioService.getUsuarios().subscribe({
       next: (res) => {
-        this.usuarios = res.success ? (res.data as Usuario[]) : [];
+        let todosUsuarios = res.success ? (res.data as Usuario[]) : [];
+        
+        if (this.rolUsuario === 'secretaria') {
+          this.usuarios = todosUsuarios.filter(u => u.id === this.usuarioIdActual);
+        } else {
+          this.usuarios = todosUsuarios;
+        }
+        
         this.cargando = false;
-        console.log('usuarios',this.usuarios);
+        console.log('usuarios', this.usuarios);
       },
       error: () => {
         this.cargando = false;
-        // this.toastr.error('Error al cargar usuarios');
       }
     });
   }
 
-    cargarSucursales(): void {
+  cargarSucursales(): void {
     this.cargando = true;
     this.sucursalService.getSucursales().subscribe({
       next: (res) => {
         this.sucursales = res.success ? (res.data as Sucursal[]) : [];
         this.cargando = false;
-        console.log('Sucursales',this.sucursales);
+        console.log('Sucursales', this.sucursales);
       },
       error: () => {
         this.cargando = false;
-        // this.toastr.error('Error al cargar sucursales');
       }
     });
   }
+
+  puedeEditar(usuario: Usuario): boolean {
+    if (this.rolUsuario === 'admin') {
+      return true; 
+    }
+
+    return this.rolUsuario === 'secretaria' && usuario.id === this.usuarioIdActual;
+  }
+
+  puedeEliminar(usuario: Usuario): boolean {
+
+    return this.rolUsuario === 'admin';
+  }
+
+  puedeAgregar(): boolean {
+    
+    return this.rolUsuario === 'admin';
+  }
+
   abrirModalCrear(): void {
+   
+    if (!this.puedeAgregar()) {
+      alert('No tienes permisos para agregar usuarios');
+      return;
+    }
+
     this.editando = false;
     this.usuarioActual = null;
     this.usuarioForm.reset({
@@ -95,14 +143,26 @@ export class UsuarioComponent implements OnInit {
       password: ''
     });
     
+    this.habilitarCampos(true);
+    
     this.usuarioForm.get('password')?.setValidators([Validators.required]);
     this.usuarioForm.get('password')?.updateValueAndValidity();
     this.modalVisible = true;
   }
 
   abrirModalEditar(usuario: Usuario): void {
+   
+    if (!this.puedeEditar(usuario)) {
+      alert('No tienes permisos para editar este usuario');
+      return;
+    }
+
     this.editando = true;
     this.usuarioActual = usuario;
+    
+    const esAdmin = this.rolUsuario === 'admin';
+    const esSecretariaPropia = this.rolUsuario === 'secretaria' && usuario.id === this.usuarioIdActual;
+    
     this.usuarioForm.patchValue({
       id: usuario.id,
       nombre: usuario.nombre,
@@ -113,31 +173,49 @@ export class UsuarioComponent implements OnInit {
       activo: usuario.activo,
       password: '' 
     });
-   
+    
+    if (esAdmin) {
+      
+      this.habilitarCampos(true);
+    } else if (esSecretariaPropia) {
+ 
+      this.habilitarCampos(false);
+      // Deshabilitar todos los campos excepto contraseña
+      this.usuarioForm.get('nombre')?.disable();
+      this.usuarioForm.get('apellido')?.disable();
+      this.usuarioForm.get('email')?.disable();
+      this.usuarioForm.get('rol')?.disable();
+      this.usuarioForm.get('sucursal_id')?.disable();
+      this.usuarioForm.get('activo')?.disable();
+      this.usuarioForm.get('password')?.enable();
+    }
+    
     this.usuarioForm.get('password')?.clearValidators();
     this.usuarioForm.get('password')?.updateValueAndValidity();
     this.modalVisible = true;
   }
 
-  enviarFormulario(): void {
-      console.log('🔍 Estado del formulario:', {
-    invalid: this.usuarioForm.invalid,
-    errors: this.usuarioForm.errors,
-    value: this.usuarioForm.value,
-    rol: this.usuarioForm.get('rol')?.value,
-    sucursal_id: this.usuarioForm.get('sucursalId')?.value
-  });
-    if (this.usuarioForm.invalid) {
-    console.log('❌ Formulario inválido');
-    this.usuarioForm.markAllAsTouched();
-    return;
+
+  habilitarCampos(habilitado: boolean): void {
+    const controls = ['nombre', 'apellido', 'email', 'rol', 'sucursal_id', 'activo', 'password'];
+    controls.forEach(control => {
+      if (habilitado) {
+        this.usuarioForm.get(control)?.enable();
+      } else {
+        this.usuarioForm.get(control)?.disable();
+      }
+    });
   }
+
+  enviarFormulario(): void {
+  
     if (this.usuarioForm.invalid) {
+      console.log('❌ Formulario inválido');
       this.usuarioForm.markAllAsTouched();
       return;
     }
 
-    const formValue = this.usuarioForm.value;
+    const formValue = this.usuarioForm.getRawValue(); 
 
     if (this.editando && this.usuarioActual) {
       const datos: ActualizarUsuarioDTO = {
@@ -149,16 +227,14 @@ export class UsuarioComponent implements OnInit {
         activo: formValue.activo,
         password: formValue.password || undefined 
       };
-      
 
       this.usuarioService.actualizarUsuario(this.usuarioActual.id, datos).subscribe({
         next: () => {
-         
           this.cerrarModal();
           this.cargarUsuarios();
         },
         error: () => {
-          
+         
         }
       });
     } else {
@@ -174,12 +250,11 @@ export class UsuarioComponent implements OnInit {
 
       this.usuarioService.crearUsuario(datos).subscribe({
         next: () => {
-          
           this.cerrarModal();
           this.cargarUsuarios();
         },
         error: () => {
-         
+        
         }
       });
     }
@@ -188,17 +263,24 @@ export class UsuarioComponent implements OnInit {
   cerrarModal(): void {
     this.modalVisible = false;
     this.usuarioForm.reset();
+    
+    this.habilitarCampos(true);
   }
 
   eliminarUsuario(id: number): void {
+    
+    if (!this.puedeEliminar({ id } as Usuario)) {
+      alert('No tienes permisos para eliminar usuarios');
+      return;
+    }
+
     if (confirm('¿Seguro que desea desactivar este usuario?')) {
       this.usuarioService.eliminarUsuario(id).subscribe({
         next: () => {
-         
           this.cargarUsuarios();
         },
         error: () => {
-          
+         
         }
       });
     }

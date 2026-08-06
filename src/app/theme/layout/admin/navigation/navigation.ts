@@ -21,7 +21,6 @@ export const NavigationItems: NavigationItem[] = [
     title: 'Navegación',
     type: 'group',
     icon: 'icon-navigation',
-    roles: ['admin', 'secretaria'],
     children: [
       {
         id: 'dashboard',
@@ -38,7 +37,6 @@ export const NavigationItems: NavigationItem[] = [
     title: 'Usuarios',
     type: 'group',
     icon: 'icon-ui',
-    roles: ['admin'] ,
     children: [
       /*{
         id: 'basic',
@@ -92,7 +90,6 @@ export const NavigationItems: NavigationItem[] = [
         url: '/admin/usuarios',
         classes: 'nav-item',
         icon: 'feather icon-file-text',
-        roles: ['admin'],
       }
     ]
   },

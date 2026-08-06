@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 
@@ -14,6 +14,7 @@ export interface LoginResponse {
     email: string;
     rol: string;
     activo: number;
+    sucursal_id:number;
   };
 }
 

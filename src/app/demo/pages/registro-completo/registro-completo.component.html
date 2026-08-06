@@ -819,3 +819,34 @@
 <div class="modal-backdrop fade show" 
      *ngIf="mostrarComprobante" 
      (click)="cerrarComprobante()"></div>
+
+     <!-- Modal de Éxito (Registro / Actualización) -->
+<div class="modal fade show" *ngIf="mostrarModalExito"
+     style="display: block; background: rgba(0,0,0,0.5);"
+     tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="feather icon-check-circle me-2"></i>
+          {{ tituloExito }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="cerrarModalExito()"></button>
+      </div>
+      <div class="modal-body text-center py-4">
+        <i class="feather icon-check-circle text-success d-block mb-3" style="font-size: 3rem;"></i>
+        <p class="mb-0">{{ mensajeExito }}</p>
+      </div>
+      <div class="modal-footer">
+        <button *ngIf="mostrarBotonComprobante" type="button" class="btn btn-info"
+                (click)="verComprobanteDesdeExito()">
+          <i class="feather icon-file-text me-1"></i> Ver Comprobante
+        </button>
+        <button type="button" class="btn btn-success" (click)="cerrarModalExito()">
+          <i class="feather icon-check me-1"></i> Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="mostrarModalExito" (click)="cerrarModalExito()"></div>

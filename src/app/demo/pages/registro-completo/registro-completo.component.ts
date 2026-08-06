@@ -1,4 +1,3 @@
-// components/registro-completo/registro-completo.component.ts
 
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -41,7 +40,7 @@ export class RegistroCompletoComponent implements OnInit {
   mostrarComprobante: boolean = false;       
   estudianteSeleccionado: any = null;      
   deudas: any[] = []; 
-   // Variables para filtros
+ 
   filtroCursoId: number | null = null;
   filtroHorarioId: number | null = null;
   filtroNombre: string = '';
@@ -49,9 +48,14 @@ export class RegistroCompletoComponent implements OnInit {
   itemsPorSeccion = 5;
   seccionActual = 1;
   subtotal = 0;
+  total_curso = 0;
   montoDescuento = 0;
   montoTotal = 0;
   saldoPendiente = 0;
+  mostrarModalExito: boolean = false;
+  tituloExito: string = '';
+  mensajeExito: string = '';
+  mostrarBotonComprobante: boolean = false;
 
   estadosEstudiante = [
     { value: 'activo', label: 'Activo', class: 'bg-success' },
@@ -122,20 +126,16 @@ export class RegistroCompletoComponent implements OnInit {
   }
 
 
-// components/registro-completo/registro-completo.component.ts
-
 irANuevoRegistro(): void {
   this.esEdicion = false;
   this.estudianteEditando = null;
   this.modo = 'registro';
   this.limpiarFormulario(); 
   
-  // IMPORTANTE: Resetear los filtros de cursos para que se muestren correctamente
   this.cursosFiltrados = [];
   this.cursoSeleccionado = null;
   this.horariosDisponibles = [];
   
-  // Resetear el formulario a valores por defecto
   this.registroForm.patchValue({
     tipo_formacion: null,
     curso_id: null,
@@ -152,7 +152,6 @@ irANuevoRegistro(): void {
     estado: 'activo'
   });
   
-  // Asegurar que los cursos están cargados
   if (this.cursos.length === 0) {
     this.cargarCursosConHorarios();
   }
@@ -485,12 +484,12 @@ calcularMontos(): void {
   const pagoInscripcion = parseFloat(this.registroForm.get('pago_inscripcion')?.value) || 0;
 
   if (tipoPago === 'total') {
-    // Pago único: se paga todo el curso de una vez, no aplica reserva
+   
     this.subtotal =  (montoMensual * duracionMeses);
     this.montoDescuento = Math.min(descuento, this.subtotal);
     this.montoTotal = this.subtotal - this.montoDescuento;
   } else {
-    // Pago mensual: matrícula + primera cuota, restando reserva y descuento
+  
     this.subtotal =  montoMensual;
     this.montoDescuento = Math.min(descuento, this.subtotal);
     const totalARestar = this.montoDescuento + montoReserva;
@@ -595,13 +594,13 @@ registrarEstudiante(): void {
       next: (res) => {
         this.cargando = false;
         if (res.success) {
-           this.generarComprobante(formValue, res.data);
-          alert('¡Registro completado exitosamente!\n\n' +
-               `Estudiante ID: ${res.data?.estudiante_id}\n` +
-               `Inscripción ID: ${res.data?.inscripcion_id}\n` +
-               `Monto Total: Bs. ${res.data?.monto_total.toFixed(2)}\n` +
-               `Descuento: ${res.data?.descuento_aplicado}`);
           
+        this.generarComprobante(formValue, res.data);
+        this.mostrarExito(
+          '¡Estudiante Registrado!',
+          `${formValue.nombre} ${formValue.apellido_paterno} fue registrado exitosamente.`,
+          true 
+        );
           this.volverALista();
         } else {
           alert('Error: ' + res.message);
@@ -653,7 +652,10 @@ actualizarEstudiante(): void {
       next: (res) => {
         this.cargando = false;
         if (res.success) {
-          alert('¡Estudiante actualizado exitosamente!');
+            this.mostrarExito(
+              '¡Estudiante Actualizado!',
+              `${formValue.nombre} ${formValue.apellido_paterno} fue actualizado exitosamente.`
+            );
           this.volverALista();
         } else {
           alert('Error: ' + res.message);
@@ -742,8 +744,6 @@ getNombreCurso(cursoId: any): string {
     return this.registroForm.controls;
   }
 
-// components/registro-completo/registro-completo.component.ts
-
 private generarComprobante(pagoRaw: any, respuestaBackend: any): void {
   const formValue = this.registroForm.value;
   const estudiante = this.esEdicion 
@@ -753,25 +753,24 @@ private generarComprobante(pagoRaw: any, respuestaBackend: any): void {
     const nombreCompleto = `${formValue.nombre || ''} ${formValue.apellido_paterno || ''} ${formValue.apellido_materno || ''}`.trim();
   const curso = this.cursos.find(c => c.id === estudiante.curso_id) || this.cursoSeleccionado;
 
-  // Obtener valores del formulario
   const tipoPago = this.registroForm.get('tipo_pago')?.value || 'mensual';
   const montoInscripcion = parseFloat(estudiante.monto_inscripcion || pagoRaw.monto_inscripcion || this.registroForm.get('monto_inscripcion')?.value || 0);
   const montoReserva = parseFloat(estudiante.monto_reserva || pagoRaw.monto_reserva || this.registroForm.get('monto_reserva')?.value || 0);
   const montoMensual = parseFloat(estudiante.monto_mensual || pagoRaw.monto_mensual || this.registroForm.get('monto_mensual')?.value || 0);
   const duracionMeses = parseInt(estudiante.duracion_meses || pagoRaw.duracion_meses || this.registroForm.get('duracion_meses')?.value || 0);
   const descuento = parseFloat(estudiante.descuento || pagoRaw.descuento || this.registroForm.get('descuento')?.value || 0);
-  
-  // Calcular subtotal según tipo de pago
+  let totalCurso = 0;
+   totalCurso = montoMensual * duracionMeses;
+
   let subtotal = 0;
   if (tipoPago === 'total') {
-    // Pago total: inscripción + (mensual * duración)
-    subtotal =  (montoMensual * duracionMeses);
+
+    subtotal = montoInscripcion + (montoMensual * duracionMeses);
   } else {
-    // Pago mensual: solo la primera cuota
+    
     subtotal = montoInscripcion;
   }
   
-  // Calcular total (subtotal - descuento - reserva solo si es mensual)
   let montoTotal = subtotal;
   if (tipoPago === 'mensual') {
     montoTotal = subtotal - descuento + montoReserva;
@@ -792,7 +791,6 @@ private generarComprobante(pagoRaw: any, respuestaBackend: any): void {
     ci_estudiante: estudiante.ci || 'N/A',
     curso: curso?.nombre || this.registroForm.get('curso_id')?.value?.toString() || 'Curso',
     
-    // NUEVOS CAMPOS
     monto_mensual: montoMensual,
     duracion_meses: duracionMeses,
     descuento: descuento,
@@ -805,8 +803,8 @@ private generarComprobante(pagoRaw: any, respuestaBackend: any): void {
     
     monto_inscripcion: montoInscripcion,
     monto_reserva: montoReserva,
-    monto_total: Math.max(montoTotal, 0), // Asegurar que no sea negativo
-    
+    monto_total: Math.max(montoTotal, 0),
+    total_curso :totalCurso,
     metodo_pago: pagoRaw.metodo_pago || this.registroForm.get('metodo_pago')?.value || 'efectivo',
     numero_recibo: pagoRaw.numero_recibo || undefined,
     observaciones: pagoRaw.observaciones_inscripcion || this.registroForm.get('observaciones_inscripcion')?.value || undefined,
@@ -815,7 +813,7 @@ private generarComprobante(pagoRaw: any, respuestaBackend: any): void {
     firma_digital: respuestaBackend?.qr_code_url || undefined
   };
 
-  this.mostrarComprobante = true;
+  //this.mostrarComprobante = true;
   
   this.estudianteSeleccionado = {
     nombre_completo: nombreCompleto,
@@ -907,4 +905,19 @@ get estudiantesSeccion(): EstudianteInscrito[] {
   seccionSiguiente(): void {
     if (this.seccionActual < this.totalSecciones) this.seccionActual++;
   }
+  private mostrarExito(titulo: string, mensaje: string, conComprobante: boolean = false): void {
+  this.tituloExito = titulo;
+  this.mensajeExito = mensaje;
+  this.mostrarBotonComprobante = conComprobante;
+  this.mostrarModalExito = true;
+}
+
+cerrarModalExito(): void {
+  this.mostrarModalExito = false;
+}
+
+verComprobanteDesdeExito(): void {
+  this.mostrarModalExito = false;
+  this.mostrarComprobante = true;
+}
 }

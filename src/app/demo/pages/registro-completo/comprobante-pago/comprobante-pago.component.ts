@@ -1,7 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-// components/registro-completo/comprobante-pago/comprobante-pago.component.ts
 
 export interface DatosComprobante {
   establecimiento: string;
@@ -15,14 +14,15 @@ export interface DatosComprobante {
   curso: string;
   monto_inscripcion: number;
   monto_reserva: number;
-  monto_mensual: number;  // AÑADIDO
-  duracion_meses: number;  // AÑADIDO
-  descuento: number;       // AÑADIDO
-  subtotal: number;        // AÑADIDO
+  monto_mensual: number;  
+  duracion_meses: number;  
+  descuento: number;       
+  subtotal: number;        
+  total_curso: number;      
   concepto: string;
   monto_total: number;
   metodo_pago: string;
-  tipo_pago: string;       // AÑADIDO - 'mensual' | 'total'
+  tipo_pago: string;      
   numero_recibo?: string;
   observaciones?: string;
   usuario_cajero: string;
@@ -34,7 +34,7 @@ export interface DatosComprobante {
   standalone: true,
   imports: [CommonModule],
   template: `
-<!-- components/registro-completo/comprobante-pago/comprobante-pago.component.ts -->
+
 
 <div class="ticket" id="comprobante">
   <!-- Encabezado -->
@@ -114,9 +114,12 @@ export interface DatosComprobante {
         <span class="label">Inscripción:</span>
         <span class="value text-end">{{ datos.monto_inscripcion | currency:'Bs ':'symbol':'1.2' }}</span>
       </div>
-
       <div class="row">
-        <span class="label">Monto Total:</span>
+        <span class="label">Curso/Carrera:</span>
+        <span class="value text-end">{{ datos.total_curso | currency:'Bs ':'symbol':'1.2' }}</span>
+      </div>
+      <div class="row">
+        <span class="label">SubTotal:</span>
         <span class="value text-end">{{ datos.subtotal | currency:'Bs ':'symbol':'1.2' }}</span>
       </div>
       <div class="row" *ngIf="datos.descuento > 0">

@@ -486,7 +486,7 @@ calcularMontos(): void {
 
   if (tipoPago === 'total') {
     // Pago único: se paga todo el curso de una vez, no aplica reserva
-    this.subtotal = montoInscripcion + (montoMensual * duracionMeses);
+    this.subtotal =  (montoMensual * duracionMeses);
     this.montoDescuento = Math.min(descuento, this.subtotal);
     this.montoTotal = this.subtotal - this.montoDescuento;
   } else {
@@ -742,18 +742,42 @@ getNombreCurso(cursoId: any): string {
     return this.registroForm.controls;
   }
 
+// components/registro-completo/registro-completo.component.ts
+
 private generarComprobante(pagoRaw: any, respuestaBackend: any): void {
+  const formValue = this.registroForm.value;
   const estudiante = this.esEdicion 
     ? this.estudianteEditando 
     : respuestaBackend;
 
-  const nombreCompleto = `${estudiante.nombre || ''} ${estudiante.apellido_paterno || ''} ${estudiante.apellido_materno || ''}`.trim();
+    const nombreCompleto = `${formValue.nombre || ''} ${formValue.apellido_paterno || ''} ${formValue.apellido_materno || ''}`.trim();
   const curso = this.cursos.find(c => c.id === estudiante.curso_id) || this.cursoSeleccionado;
 
-
+  // Obtener valores del formulario
+  const tipoPago = this.registroForm.get('tipo_pago')?.value || 'mensual';
   const montoInscripcion = parseFloat(estudiante.monto_inscripcion || pagoRaw.monto_inscripcion || this.registroForm.get('monto_inscripcion')?.value || 0);
   const montoReserva = parseFloat(estudiante.monto_reserva || pagoRaw.monto_reserva || this.registroForm.get('monto_reserva')?.value || 0);
-  const totalPagado = montoInscripcion + montoReserva;
+  const montoMensual = parseFloat(estudiante.monto_mensual || pagoRaw.monto_mensual || this.registroForm.get('monto_mensual')?.value || 0);
+  const duracionMeses = parseInt(estudiante.duracion_meses || pagoRaw.duracion_meses || this.registroForm.get('duracion_meses')?.value || 0);
+  const descuento = parseFloat(estudiante.descuento || pagoRaw.descuento || this.registroForm.get('descuento')?.value || 0);
+  
+  // Calcular subtotal según tipo de pago
+  let subtotal = 0;
+  if (tipoPago === 'total') {
+    // Pago total: inscripción + (mensual * duración)
+    subtotal =  (montoMensual * duracionMeses);
+  } else {
+    // Pago mensual: solo la primera cuota
+    subtotal = montoInscripcion;
+  }
+  
+  // Calcular total (subtotal - descuento - reserva solo si es mensual)
+  let montoTotal = subtotal;
+  if (tipoPago === 'mensual') {
+    montoTotal = subtotal - descuento + montoReserva;
+  } else {
+    montoTotal = subtotal - descuento;
+  }
 
   this.comprobanteDatos = {
     establecimiento: this.ESTABLECIMIENTO.nombre,
@@ -764,18 +788,24 @@ private generarComprobante(pagoRaw: any, respuestaBackend: any): void {
     numero_comprobante: respuestaBackend?.numero_comprobante || `CP-${Date.now()}`,
     fecha_emision: new Date().toISOString(),
     
-    estudiante: nombreCompleto || 'Estudiante registrado',
+    estudiante: nombreCompleto || '',
     ci_estudiante: estudiante.ci || 'N/A',
     curso: curso?.nombre || this.registroForm.get('curso_id')?.value?.toString() || 'Curso',
     
-    concepto: 'Inscripción y matrícula - ' + (curso?.nombre || 'Curso'),
+    // NUEVOS CAMPOS
+    monto_mensual: montoMensual,
+    duracion_meses: duracionMeses,
+    descuento: descuento,
+    subtotal: subtotal,
+    tipo_pago: tipoPago,
     
-   
+    concepto: tipoPago === 'total' 
+      ? `Inscripción + Total Curso (${duracionMeses} meses)` 
+      : 'Inscripción y primera cuota',
+    
     monto_inscripcion: montoInscripcion,
     monto_reserva: montoReserva,
-    
-   
-    monto_total: totalPagado,
+    monto_total: Math.max(montoTotal, 0), // Asegurar que no sea negativo
     
     metodo_pago: pagoRaw.metodo_pago || this.registroForm.get('metodo_pago')?.value || 'efectivo',
     numero_recibo: pagoRaw.numero_recibo || undefined,

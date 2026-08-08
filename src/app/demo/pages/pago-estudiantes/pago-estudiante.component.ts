@@ -1,12 +1,9 @@
-// pago-estudiante.component.ts
-
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, FormGroup, Validators } from '@angular/forms';
 import { SharedModule } from 'src/app/theme/shared/shared.module';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 
-// Importar el componente del comprobante
 import { ComprobantePagoComponent, DatosComprobante } from './comprobante-pago/comprobante-pago.component';
 
 import {
@@ -17,6 +14,7 @@ import {
   ObtenerDeudasDTO,
   RegistrarPagoNevoDTO
 } from '../../../services/pago-estudiante.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-pago-estudiante',
@@ -46,6 +44,10 @@ export class PagoEstudianteComponent implements OnInit {
   registrandoNuevaCuota = false;
   
   comprobanteDatos: DatosComprobante | null = null;
+  usuarioActual: any = null;
+  sucursalUsuario: number | null = null;
+  rolUsuario: string | null = null;
+  usuarioIdActual: number | null = null;
 
   buscarForm: FormGroup = this.fb.group({
     query: ['', [Validators.required, Validators.minLength(2)]]
@@ -76,38 +78,71 @@ export class PagoEstudianteComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private pagoService: PagoEstudianteService
+    private pagoService: PagoEstudianteService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.buscarForm.get('query')!
-      .valueChanges
-      .pipe(
-        debounceTime(400),
-        distinctUntilChanged(),
-        filter((q: string) => q && q.trim().length >= 2)
-      )
-      .subscribe(query => {
-        this.buscarEstudiantesAuto(query);
-      });
+        const user = this.authService.getCurrentUser();
+    if (user) {
+      this.usuarioActual = user;
+      this.usuarioIdActual = user.id;
+      this.sucursalUsuario = user.sucursal_id;
+      this.rolUsuario = user.rol;
+      
+      console.log('📝 ID del usuario logueado:', this.usuarioIdActual);
+      console.log('🏢 ID de la sucursal del usuario logueado:', this.sucursalUsuario);
+      console.log('👤 Rol del usuario logueado:', this.rolUsuario);
+    }
+      this.buscarForm.get('query')!
+        .valueChanges
+        .pipe(
+          debounceTime(400),
+          distinctUntilChanged(),
+          filter((q: string): q is string => {
+            if (!q) return false;
+            const trimmed = q.trim();
+            return trimmed.length >= 2;
+          })
+        )
+        .subscribe(query => {
+          this.buscarEstudiantesAuto(query);
+        });
   }
 
-  buscarEstudiantesAuto(query: string): void {
-    this.buscando = true;
-    this.estudianteSeleccionado = null;
-    this.deudas = [];
+buscarEstudiantesAuto(query: string): void {
+  this.estudiantes = [];
+  this.buscando = true;
+  this.estudianteSeleccionado = null;
+  this.deudas = [];
 
-    this.pagoService.buscarEstudiantes({ query: query.trim() }).subscribe({
-      next: (res) => {
-        this.buscando = false;
-        this.estudiantes = res.success ? (res.data?.estudiantes || []) : [];
-      },
-      error: () => {
-        this.buscando = false;
+  this.pagoService.buscarEstudiantes({ query: query.trim() }).subscribe({
+    next: (res) => {
+      this.buscando = false;
+      if (res.success && res.data?.estudiantes) {
+        this.estudiantes = this.eliminarDuplicados(res.data.estudiantes);
+        console.log('Resultados de búsqueda (sin duplicados):', this.estudiantes);
+      } else {
         this.estudiantes = [];
       }
-    });
-  }
+    },
+    error: () => {
+      this.buscando = false;
+      this.estudiantes = [];
+    }
+  });
+}
+private eliminarDuplicados(estudiantes: EstudianteSearchResult[]): EstudianteSearchResult[] {
+  const seen = new Set();
+  return estudiantes.filter(est => {
+    const key = est.estudiante_id; 
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
 
   fechaHoy(): string {
     const now = new Date();
@@ -149,6 +184,7 @@ export class PagoEstudianteComponent implements OnInit {
         this.buscando = false;
         if (res.success && res.data?.estudiantes) {
           this.estudiantes = res.data.estudiantes as EstudianteSearchResult[];
+          console.log('Resultados de búsqueda:', this.estudiantes);
         } else {
           this.estudiantes = [];
         }
@@ -182,19 +218,23 @@ export class PagoEstudianteComponent implements OnInit {
     });
   }
 
-  seleccionarEstudiante(estudiante: EstudianteSearchResult): void {
-    console.log('Estudiante seleccionado:', estudiante); 
-
-    if (!estudiante?.inscripcion_id) {
-      console.error('El estudiante no tiene inscripcion_id válido');
-      return;
-    }
-
-    this.estudianteSeleccionado = estudiante;
-    this.estudiantes = [];
-    this.buscarForm.patchValue({ query: estudiante.nombre_completo });
-    this.cargarDeudasPendientes(estudiante.inscripcion_id);
+seleccionarEstudiante(estudiante: EstudianteSearchResult, event?: Event): void {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
   }
+  console.log('✅ Estudiante seleccionado:', estudiante);
+  if (!estudiante?.inscripcion_id) {
+    console.error(' El estudiante no tiene inscripcion_id válido');
+    return;
+  }
+  this.estudiantes = []; 
+  this.estudianteSeleccionado = estudiante; 
+  this.buscarForm.patchValue({ 
+    query: estudiante.nombre_completo 
+  }, { emitEvent: false }); 
+  this.cargarDeudasPendientes(estudiante.inscripcion_id);
+}
 
   prepararPago(deuda: DeudaPendiente): void {
     this.pagoForm.patchValue({
@@ -396,7 +436,6 @@ async descargarPDF(): Promise<void> {
   });
 
     abrirModalNuevaCuota(): void {
-    // Cargar tipos de cobro si aún no están cargados
     if (this.tiposCobro.length === 0) {
       this.pagoService.getTiposCobro().subscribe({
         next: (res) => {
@@ -447,7 +486,7 @@ async descargarPDF(): Promise<void> {
       next: (res) => {
         this.registrandoNuevaCuota = false;
         if (res.success) {
-          this.generarComprobante(raw, res.data); // reutiliza el comprobante
+          this.generarComprobante(raw, res.data); 
           this.cargarDeudasPendientes(this.estudianteSeleccionado!.inscripcion_id);
           this.modalNuevaCuotaVisible = false;
           this.mostrarComprobante = true;
@@ -462,7 +501,6 @@ async descargarPDF(): Promise<void> {
     });
   }
 
-  // Getter para el nuevo form
   get nc() {
     return this.nuevaCuotaForm.controls;
   }

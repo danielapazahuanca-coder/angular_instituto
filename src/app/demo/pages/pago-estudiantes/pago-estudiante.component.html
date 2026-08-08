@@ -24,17 +24,17 @@
 
     <!-- Dropdown de resultados -->
     <div *ngIf="estudiantes.length > 0" class="list-group mt-2">
-        <a
-          *ngFor="let est of estudiantes"
-          class="list-group-item list-group-item-action"
-          (click)="seleccionarEstudiante(est)"
-        >
-          <strong>{{ est.nombre_completo }}</strong><br>
-          <small class="text-muted">
-            CI: {{ est.ci }} | Curso: {{ est.curso_nombre }}
-          </small>
-        </a>
-
+      <a
+        *ngFor="let est of estudiantes; trackBy: trackEstudianteById"
+        class="list-group-item list-group-item-action"
+        (click)="seleccionarEstudiante(est, $event)"
+        (mousedown)="$event.preventDefault()"
+      >
+        <strong>{{ est.nombre_completo }}</strong><br>
+        <small class="text-muted">
+          CI: {{ est.ci }} | Curso: {{ est.curso_nombre }}
+        </small>
+      </a>
     </div>
   </div>  
 </div>
@@ -45,7 +45,6 @@
   <p>Curso: {{ estudianteSeleccionado.curso_nombre }} | Modalidad: {{ estudianteSeleccionado.modalidad }}</p>
    
   <div class="d-flex justify-content-between align-items-center">
-  <h5 class="mb-0">Estudiante: {{ estudianteSeleccionado.nombre_completo }}</h5>
   <button 
     class="btn btn-warning btn-sm"
     (click)="abrirModalNuevaCuota()"

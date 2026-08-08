@@ -18,6 +18,7 @@ export interface EstudianteSearchResult {
   fecha_inicio: string;
   monto_inscripcion: number;
   monto_mensual: number;
+  sucursal_id: number | null;
 }
 
 export interface DeudaPendiente {

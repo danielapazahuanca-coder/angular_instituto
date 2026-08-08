@@ -702,12 +702,17 @@ cargarEstudiantes(): void {
     next: (res) => {
       this.cargando = false;
       if (res.success && res.data) {
-        
-        this.estudiantesInscritos = res.data.map(est => ({
+        let estudiantes = res.data.map(est => ({
           ...est,
-          horario_turno: est.turno,        
-          horario_dias: est.dias_semana  
+          horario_turno: est.turno,
+          horario_dias: est.dias_semana
         }));
+
+        if (this.rolUsuario === 'secretaria' && this.sucursalUsuario !== null) {
+          estudiantes = estudiantes.filter(est => est.sucursal_id === this.sucursalUsuario);
+        }
+
+        this.estudiantesInscritos = estudiantes;
         console.log('Estudiantesss:', this.estudiantesInscritos);
         this.aplicarFiltros();
       } else {

@@ -1,5 +1,3 @@
-// movimiento-financiero.service.ts
-
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -29,6 +27,7 @@ export interface MovimientoFinanciero {
   fecha_creacion: string;
   fecha_actualizacion: string;
   tipo_movimiento_nombre?: string; 
+  sucursal_id?: number | null;
 }
 
 export interface CrearMovimientoFinancieroDTO {
@@ -42,6 +41,7 @@ export interface CrearMovimientoFinancieroDTO {
   descripcion?: string | null;
   comprobante?: string | null;
   usuario_registro_id?: number | null;
+  sucursal_id?: number | null;
 }
 
 export interface ActualizarMovimientoFinancieroDTO {
@@ -55,6 +55,7 @@ export interface ActualizarMovimientoFinancieroDTO {
   descripcion?: string | null;
   comprobante?: string | null;
   usuario_registro_id?: number | null;
+  sucursal_id?: number | null;
 }
 
 export interface ApiResponse {

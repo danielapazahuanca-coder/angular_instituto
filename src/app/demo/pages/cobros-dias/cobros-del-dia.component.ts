@@ -14,6 +14,7 @@ import {
 import { CommonModule } from '@angular/common';
 
 import { ComprobantePagoComponent, DatosComprobante } from '../pago-estudiantes/comprobante-pago/comprobante-pago.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-cobros-del-dia',
@@ -65,6 +66,10 @@ export class CobrosDelDiaComponent implements OnInit {
 
   cursosUnicos: string[] = [];
   estudiantesUnicos: string[] = [];
+    usuarioActual: any = null;
+  sucursalUsuario: number | null = null;
+  rolUsuario: string | null = null;
+  usuarioIdActual: number | null = null;
 
   private readonly ESTABLECIMIENTO = {
     nombre: 'Instituto IBCT',
@@ -75,10 +80,22 @@ export class CobrosDelDiaComponent implements OnInit {
 
   constructor(
     private pagoService: PagoEstudianteService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+        const user = this.authService.getCurrentUser();
+    if (user) {
+      this.usuarioActual = user;
+      this.usuarioIdActual = user.id;
+      this.sucursalUsuario = user.sucursal_id;
+      this.rolUsuario = user.rol;
+      
+      console.log('📝 ID del usuario logueado:', this.usuarioIdActual);
+      console.log('🏢 ID de la sucursal del usuario logueado:', this.sucursalUsuario);
+      console.log('👤 Rol del usuario logueado:', this.rolUsuario);
+    }
     this.loadCobrosDelDia();
 
     this.filtrosForm.valueChanges.subscribe(() => {
@@ -95,21 +112,20 @@ export class CobrosDelDiaComponent implements OnInit {
     this.loading = true;
     this.pagoService.getCobrosDelDia().subscribe({
       next: (response) => {
-        console.log('🔍 Respuesta completa del servicio:', response);
-        this.cobros = response.data?.cobros || [];
+        const todosLosCobros: CobroDelDia[] = response.data?.cobros || [];
+
+        this.cobros = this.filtrarPorRolYSucursal(todosLosCobros);
 
         this.cursosUnicos = [...new Set(this.cobros.map(c => c.curso).filter(Boolean))];
         this.estudiantesUnicos = [...new Set(this.cobros.map(c => c.nombre_estudiante).filter(Boolean))];
-        
+
         this.cobrosFiltrados = [...this.cobros];
-        this.total = response.data?.total || 0;
-        
-        console.log(' Estados de cobros:', this.cobros.map(c => ({
-          nombre: c.nombre_estudiante,
-          estado: c.estado_pago_calculado,
-          puedeCobrar: this.puedeCobrar(c)
-        })));
-        
+
+        this.total = this.cobros.reduce(
+          (acc, c) => acc + parseFloat(c.saldo_pendiente as any || '0'),
+          0
+        );
+
         this.loading = false;
       },
       error: (error) => {
@@ -119,10 +135,28 @@ export class CobrosDelDiaComponent implements OnInit {
       }
     });
   }
+    private filtrarPorRolYSucursal(cobros: CobroDelDia[]): CobroDelDia[] {
+    if (!this.rolUsuario) {
+      return [];
+    }
+
+    const rol = this.rolUsuario.toLowerCase();
+
+    if (rol === 'admin') {
+      return cobros;
+    }
+
+    if (this.sucursalUsuario == null) {
+      return []; 
+    }
+
+    return cobros.filter(c => (c as any).sucursal_id === this.sucursalUsuario);
+  }
+
 
   aplicarFiltros(): void {
     const { curso, estudiante } = this.filtrosForm.value;
-    
+
     this.cobrosFiltrados = this.cobros.filter(cobro => {
       let cumpleCurso = true;
       let cumpleEstudiante = true;
@@ -207,8 +241,9 @@ export class CobrosDelDiaComponent implements OnInit {
       numero_recibo: raw.numero_recibo?.trim() || null,
       fecha_pago: new Date(raw.fecha_pago).toISOString(),
       observaciones: raw.observaciones?.trim() || null,
-      usuario_id: 1,
-      tipo_pago: 'deuda_existente'
+      usuario_id: this.usuarioIdActual || 0,
+      tipo_pago: 'deuda_existente',
+      sucursal_id: this.sucursalUsuario || null
     };
 
     console.log('Datos enviados al backend:', pagoData);

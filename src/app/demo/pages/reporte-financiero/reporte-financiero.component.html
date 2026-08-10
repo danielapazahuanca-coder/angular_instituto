@@ -70,7 +70,7 @@
               <th>Método</th>
               <th>Estado</th>
               <th>Fecha Pago</th>
-              <th>Recibo</th>
+              <th>Sucursal</th>
             </tr>
           </thead>
           <tbody>
@@ -90,7 +90,7 @@
                 </span>
               </td>
               <td>{{ item.fecha_pago | date:'dd/MM/yyyy HH:mm' }}</td>
-              <td>{{ item.numero_recibo || '—' }}</td>
+              <td>{{ item.sucursal_nombre || '' }}</td>
             </tr>
             <tr *ngIf="reporte.length === 0 && !cargando">
               <td colspan="8" class="text-center">No se encontraron pagos en el rango seleccionado.</td>

@@ -103,6 +103,7 @@ export interface RegistrarPagoDTO {
   usuario_registro_id?: number;
   usuario_id?: number;
   tipo_pago: 'deuda_existente'| 'nuevo_cobro';
+  sucursal_id?: number | null;
 }
 export interface RegistrarPagoNevoDTO {
   cobro_id?: number;           
@@ -116,6 +117,7 @@ export interface RegistrarPagoNevoDTO {
   usuario_registro_id?: number;
   usuario_id?: number;
   tipo_pago: 'deuda_existente' | 'nuevo_cobro';
+  sucursal_id?: number | null;
 }
 export interface CobroDelDia {
   cobro_id: number;

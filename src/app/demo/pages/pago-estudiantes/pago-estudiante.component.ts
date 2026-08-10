@@ -120,8 +120,9 @@ buscarEstudiantesAuto(query: string): void {
     next: (res) => {
       this.buscando = false;
       if (res.success && res.data?.estudiantes) {
-        this.estudiantes = this.eliminarDuplicados(res.data.estudiantes);
-        console.log('Resultados de búsqueda (sin duplicados):', this.estudiantes);
+        const estudiantesFiltrados = this.filtrarPorSucursal(res.data.estudiantes);
+        this.estudiantes = this.eliminarDuplicados(estudiantesFiltrados);
+        console.log('Resultados de búsqueda (filtrados):', this.estudiantes);
       } else {
         this.estudiantes = [];
       }
@@ -166,35 +167,57 @@ private eliminarDuplicados(estudiantes: EstudianteSearchResult[]): EstudianteSea
     });
   }
 
-  buscarEstudiantes(): void {
-    if (this.buscarForm.invalid) {
-      this.buscarForm.markAllAsTouched();
-      return;
-    }
+buscarEstudiantes(): void {
+  if (this.buscarForm.invalid) {
+    this.buscarForm.markAllAsTouched();
+    return;
+  }
 
-    const query = this.buscarForm.get('query')?.value.trim();
-    if (!query || query.length < 2) return;
+  const query = this.buscarForm.get('query')?.value.trim();
+  if (!query || query.length < 2) return;
 
-    this.buscando = true;
-    this.estudianteSeleccionado = null;
-    this.deudas = [];
+  this.buscando = true;
+  this.estudianteSeleccionado = null;
+  this.deudas = [];
 
-    this.pagoService.buscarEstudiantes({ query }).subscribe({
-      next: (res) => {
-        this.buscando = false;
-        if (res.success && res.data?.estudiantes) {
-          this.estudiantes = res.data.estudiantes as EstudianteSearchResult[];
-          console.log('Resultados de búsqueda:', this.estudiantes);
-        } else {
-          this.estudiantes = [];
-        }
-      },
-      error: () => {
-        this.buscando = false;
+  this.pagoService.buscarEstudiantes({ query }).subscribe({
+    next: (res) => {
+      this.buscando = false;
+      if (res.success && res.data?.estudiantes) {
+       
+        const estudiantesFiltrados = this.filtrarPorSucursal(res.data.estudiantes);
+        this.estudiantes = estudiantesFiltrados as EstudianteSearchResult[];
+        console.log('Resultados de búsqueda (filtrados):', this.estudiantes);
+      } else {
         this.estudiantes = [];
       }
-    });
+    },
+    error: () => {
+      this.buscando = false;
+      this.estudiantes = [];
+    }
+  });
+}
+private filtrarPorSucursal(estudiantes: EstudianteSearchResult[]): EstudianteSearchResult[] {
+
+  if (this.rolUsuario === 'admin') {
+    console.log('👑 Usuario admin - Mostrando todos los estudiantes');
+    return estudiantes;
   }
+
+  if (this.sucursalUsuario !== null) {
+    console.log(` Filtrando por sucursal: ${this.sucursalUsuario}`);
+    const filtrados = estudiantes.filter(est => est.sucursal_id === this.sucursalUsuario);
+    console.log(` Encontrados ${filtrados.length} estudiantes en la sucursal`);
+    return filtrados;
+  }
+
+  console.warn('⚠️ No se pudo determinar la sucursal del usuario');
+  return [];
+}
+trackEstudianteById(index: number, estudiante: EstudianteSearchResult): number {
+  return estudiante.estudiante_id || estudiante.estudiante_id || index;
+}
 
   cargarDeudasPendientes(inscripcionId: number): void {
     if (!inscripcionId || inscripcionId <= 0) {
@@ -269,8 +292,9 @@ seleccionarEstudiante(estudiante: EstudianteSearchResult, event?: Event): void {
       numero_recibo: raw.numero_recibo?.trim() || null,
       fecha_pago: new Date(raw.fecha_pago).toISOString(),
       observaciones: raw.observaciones?.trim() || null,
-      usuario_id: 1, 
-      tipo_pago: 'deuda_existente'
+      usuario_id: this.usuarioIdActual || 0, 
+      tipo_pago: 'deuda_existente',
+      sucursal_id: this.sucursalUsuario || null
     };
 
     console.log('Datos enviados al backend:', pagoData);
@@ -477,8 +501,9 @@ async descargarPDF(): Promise<void> {
       numero_recibo: raw.numero_recibo?.trim() || null,
       fecha_pago: new Date(raw.fecha_pago).toISOString(),
       observaciones: raw.observaciones?.trim() || null,
-      usuario_id: 1,
-      tipo_pago: 'nuevo_cobro'
+      usuario_id: this.usuarioIdActual || 1,
+      tipo_pago: 'nuevo_cobro',
+      sucursal_id: this.sucursalUsuario || null
     };
     console.log("Payload nueva cuota:", pagoData);
 
